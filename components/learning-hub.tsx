@@ -60,7 +60,7 @@ export function LearningHub({ books }: Props) {
       window.removeEventListener("storage", sync);
       window.removeEventListener("codeverse-learning-memory", sync);
     };
-  }, []);
+  }, [books]);
 
   const continueLearning = useMemo<ProgressCard | null>(() => {
     const courseProgress = courses
