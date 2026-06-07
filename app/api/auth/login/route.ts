@@ -1,15 +1,5 @@
 import { NextResponse } from "next/server";
-
-function createDemoToken(email: string) {
-  const role = email === "moeedkamraan1123@gmail.com" ? "admin" : "student";
-  const payload = {
-    email,
-    role,
-    issuedAt: new Date().toISOString()
-  };
-
-  return Buffer.from(JSON.stringify(payload)).toString("base64url");
-}
+import { createAuthToken } from "@/lib/auth";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
@@ -24,16 +14,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Password must be at least 6 characters." }, { status: 400 });
   }
 
-  if (email === "moeedkamraan1123@gmail.com" && password !== "Cde@Verse2026") {
-    return NextResponse.json({ error: "Invalid admin password." }, { status: 401 });
-  }
-
-  const isAdmin = email === "moeedkamraan1123@gmail.com";
+  const configuredAdminEmail = process.env.CODEVERSE_DEMO_ADMIN_EMAIL?.trim().toLowerCase() ?? "";
+  const configuredAdminPassword = process.env.CODEVERSE_DEMO_ADMIN_PASSWORD ?? "";
+  const isAdmin = configuredAdminEmail && configuredAdminPassword
+    ? email === configuredAdminEmail && password === configuredAdminPassword
+    : false;
 
   return NextResponse.json({
-    token: createDemoToken(email),
+    token: createAuthToken({
+      email,
+      name: isAdmin ? "CodeVerse Admin" : email.split("@")[0],
+      role: isAdmin ? "admin" : "student"
+    }),
     user: {
-      name: isAdmin ? "Moeed Kamraan" : email === "student@codeverse.dev" ? "CodeVerse Student" : email.split("@")[0],
+      name: isAdmin ? "CodeVerse Admin" : email.split("@")[0],
       email,
       role: isAdmin ? "admin" : "student"
     }

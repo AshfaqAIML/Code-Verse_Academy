@@ -1,14 +1,14 @@
-import { Playground } from "@/components/playground";
-import { Section } from "@/components/section";
+import PlaygroundClient from "@/components/playground-ide/PlaygroundClient";
+
+export const metadata = {
+  title: "Code Playground | CodeVerse Academy",
+  description: "Write HTML, CSS, and JS with live preview."
+};
 
 export default function PlaygroundPage() {
   return (
-    <Section
-      eyebrow="Coding playground"
-      title="Split-screen editor with live output"
-      copy="Run HTML/CSS/JS, simulated Python analysis, and SQL result previews with console feedback, reset controls and theme switching."
-    >
-      <Playground />
-    </Section>
+    <main className="min-h-screen bg-slate-50 dark:bg-slate-950">
+      <PlaygroundClient />
+    </main>
   );
 }

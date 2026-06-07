@@ -7,8 +7,8 @@ import { useState } from "react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("moeedkamraan1123@gmail.com");
-  const [password, setPassword] = useState("Cde@Verse2026");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -47,7 +47,7 @@ export default function LoginPage() {
         <div className="bg-slate-950 p-8 text-white">
           <p className="text-sm font-bold uppercase tracking-[0.28em] text-cyan-200">Welcome back</p>
           <h1 className="mt-4 text-4xl font-black tracking-tight">Resume your streak and keep building.</h1>
-          <p className="mt-4 leading-7 text-slate-300">JWT, Clerk or Firebase Auth can be connected through the shared API layer.</p>
+          <p className="mt-4 leading-7 text-slate-300">This demo now issues signed session tokens and validates them through the shared API layer.</p>
           <div className="mt-10 rounded-2xl bg-white/10 p-5">
             <p className="text-3xl font-black">21 days</p>
             <p className="text-sm text-slate-300">current learning streak</p>
@@ -55,7 +55,7 @@ export default function LoginPage() {
         </div>
         <form className="p-8" onSubmit={handleSubmit}>
           <h2 className="text-2xl font-black">Sign in</h2>
-          <p className="mt-2 text-sm text-slate-500">Use the admin demo account below or enter any valid learner email.</p>
+          <p className="mt-2 text-sm text-slate-500">Use any valid email and password for the demo environment. Admin access can be configured through environment variables.</p>
           <label className="mt-6 block text-sm font-bold">
             Email
             <span className="mt-2 flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-3 dark:border-slate-800">

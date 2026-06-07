@@ -28,9 +28,28 @@ export type LibraryBook = Omit<LibraryBookSummary, "chapters"> & {
 };
 
 const booksDir = path.join(process.cwd(), "data", "books");
+const preferredBookOrder = new Map([
+  ["html-foundations", 0],
+  ["css-design-systems", 1],
+  ["javascript-mastery", 2]
+]);
+
+function sortBooksByLearningOrder<T extends { slug: string; title: string }>(books: T[]) {
+  return [...books].sort((left, right) => {
+    const leftRank = preferredBookOrder.get(left.slug);
+    const rightRank = preferredBookOrder.get(right.slug);
+
+    if (leftRank !== undefined || rightRank !== undefined) {
+      return (leftRank ?? Number.MAX_SAFE_INTEGER) - (rightRank ?? Number.MAX_SAFE_INTEGER);
+    }
+
+    return left.title.localeCompare(right.title);
+  });
+}
 
 export function getLibraryBooks(): LibraryBookSummary[] {
-  return JSON.parse(fs.readFileSync(path.join(booksDir, "registry.json"), "utf8")) as LibraryBookSummary[];
+  const books = JSON.parse(fs.readFileSync(path.join(booksDir, "registry.json"), "utf8")) as LibraryBookSummary[];
+  return sortBooksByLearningOrder(books);
 }
 
 export function getLibraryBook(slug: string): LibraryBook | null {

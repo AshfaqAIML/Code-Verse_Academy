@@ -2,36 +2,75 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Languages, LogOut, Menu, Moon, PanelLeftOpen, Search, Sparkles, Sun, UserCircle, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Bell, Languages, LogOut, Menu, Moon, PanelLeftOpen, Sparkles, Sun, UserCircle, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { navItems } from "@/lib/data";
 import { useTheme } from "@/components/theme-provider";
+import { GlobalSearch } from "@/components/global-search";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [practicePanelOpen, setPracticePanelOpen] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
   const pathname = usePathname();
+  const previousPathRef = useRef(pathname);
   const { theme, toggleTheme } = useTheme();
-  const isPracticeRoute = pathname.startsWith("/practice");
-  const hideDesktopSidebar = isPracticeRoute && !practicePanelOpen;
+  const isWorkspaceRoute = pathname.startsWith("/practice") || pathname.startsWith("/playground");
+  const hideDesktopSidebar = isWorkspaceRoute && !practicePanelOpen;
 
   useEffect(() => {
-    const syncAuth = () => setSignedIn(Boolean(window.localStorage.getItem("codeverse-token")));
-    syncAuth();
+    let cancelled = false;
+
+    const syncAuth = async () => {
+      const token = window.localStorage.getItem("codeverse-token");
+      if (!token) {
+        if (!cancelled) setSignedIn(false);
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/auth/session", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+          window.localStorage.removeItem("codeverse-token");
+          window.localStorage.removeItem("codeverse-user");
+          if (!cancelled) setSignedIn(false);
+          return;
+        }
+
+        if (!cancelled) setSignedIn(true);
+      } catch {
+        if (!cancelled) setSignedIn(Boolean(window.localStorage.getItem("codeverse-token")));
+      }
+    };
+
+    void syncAuth();
     window.addEventListener("storage", syncAuth);
     window.addEventListener("codeverse-auth", syncAuth);
     return () => {
+      cancelled = true;
       window.removeEventListener("storage", syncAuth);
       window.removeEventListener("codeverse-auth", syncAuth);
     };
   }, [pathname]);
 
   useEffect(() => {
-    if (!isPracticeRoute) {
+    const previousPath = previousPathRef.current;
+    const enteringPlayground = pathname.startsWith("/playground") && !previousPath.startsWith("/playground");
+
+    if (enteringPlayground) {
+      setPracticePanelOpen(false);
+      setOpen(false);
+    }
+
+    if (!isWorkspaceRoute) {
       setPracticePanelOpen(false);
     }
-  }, [isPracticeRoute]);
+
+    previousPathRef.current = pathname;
+  }, [isWorkspaceRoute, pathname]);
 
   function handleLogout() {
     window.localStorage.removeItem("codeverse-token");
@@ -131,14 +170,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <Menu className="size-5" />
               </button>
             )}
-            <div className="relative hidden flex-1 sm:block">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
-              <input
-                aria-label="Global search"
-                placeholder="Search tutorials, projects, interview questions..."
-                className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-sm outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-cyan-100 dark:border-slate-800 dark:bg-slate-900 dark:focus:ring-cyan-950"
-              />
-            </div>
+            <GlobalSearch />
             <button
               className="hidden items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition hover:text-ink dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:text-white md:flex"
               aria-label="Change language"

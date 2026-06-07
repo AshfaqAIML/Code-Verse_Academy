@@ -79,20 +79,23 @@ export const courses = [
     certificate: true
   },
   {
-    title: "HTML Foundations",
+    title: "HTML",
     slug: "html-foundations",
+    bookSlug: "html-foundations",
     category: "Web",
     level: "Beginner",
-    lessons: 36,
+    lessons: 37,
     progress: 88,
     color: "from-orange-400 to-coral",
-    description: "Semantic pages, forms, accessibility, SEO basics and production page structure.",
-    chapters: ["Document anatomy", "Forms", "Media", "Accessibility"],
+    description:
+      "Complete HTML and Web Development Foundations Handbook1 covers internet basics, document anatomy, semantic HTML, forms, media, accessibility and SEO-friendly page structure.",
+    chapters: ["Internet basics", "Document anatomy", "Semantic HTML", "Forms & accessibility"],
     certificate: true
   },
   {
-    title: "CSS Design Systems",
+    title: "CSS",
     slug: "css-design-systems",
+    bookSlug: "css-design-systems",
     category: "Web",
     level: "Beginner",
     lessons: 44,
@@ -103,8 +106,9 @@ export const courses = [
     certificate: true
   },
   {
-    title: "JavaScript Mastery",
+    title: "JavaScript",
     slug: "javascript-mastery",
+    bookSlug: "javascript-mastery",
     category: "Programming",
     level: "Intermediate",
     lessons: 58,

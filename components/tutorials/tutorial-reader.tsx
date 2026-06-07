@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Bookmark,
   Expand,
   ListChecks,
   Menu,
@@ -15,9 +16,11 @@ import {
   PanelLeftOpen,
   Search
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { RevisionAssistant } from "@/components/revision/revision-assistant";
 import type { LibraryBookBlock, LibraryBookChapter } from "@/lib/books";
+import { getBookProgress, recordBookProgress } from "@/lib/book-progress";
+import { getBookmarks, recordRecentLearning, toggleBookmark } from "@/lib/learning-memory";
 
 type ReaderBook = {
   slug: string;
@@ -47,6 +50,9 @@ export function TutorialReader({ book, chapter, previous, next, headings, revisi
   const [chaptersOpen, setChaptersOpen] = useState(false);
   const [outlineOpen, setOutlineOpen] = useState(false);
   const [wideRead, setWideRead] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [progressPercent, setProgressPercent] = useState(Math.round((chapter.number / Math.max(book.chapters.length, 1)) * 100));
+  const [bookmarked, setBookmarked] = useState(false);
 
   const readerGrid = wideRead
     ? "xl:grid-cols-[minmax(0,1fr)]"
@@ -66,12 +72,50 @@ export function TutorialReader({ book, chapter, previous, next, headings, revisi
         "codeverse-learning-memory",
         JSON.stringify({ ...parsed, completedTopics, lastReadChapter: chapter.slug, lastStudiedAt: new Date().toISOString() })
       );
+      recordBookProgress({
+        bookSlug: book.slug,
+        chapterSlug: chapter.slug,
+        chapterNumber: chapter.number,
+        totalChapters: book.chapters.length
+      });
+      recordRecentLearning({
+        title: `${book.title} - ${chapter.title}`,
+        href: `/tutorials/${book.slug}/${chapter.slug}`,
+        kind: "book"
+      });
     } catch {
       // Reading progress should never block navigation.
     }
   }
 
+  useEffect(() => {
+    const saved = getBookProgress(book.slug);
+    setProgressPercent(saved?.progress ?? Math.round((chapter.number / Math.max(book.chapters.length, 1)) * 100));
+    recordBookProgress({
+      bookSlug: book.slug,
+      chapterSlug: chapter.slug,
+      chapterNumber: chapter.number,
+      totalChapters: book.chapters.length
+    });
+    setBookmarked(getBookmarks().some((item) => item.href === `/tutorials/${book.slug}/${chapter.slug}`));
+  }, [book.slug, book.chapters.length, chapter.slug, chapter.number]);
+
+  const readingTime = useMemo(() => {
+    const wordCount = chapter.blocks
+      .map((block) => block.text)
+      .join(" ")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean).length;
+    return Math.max(3, Math.ceil(wordCount / 180));
+  }, [chapter.blocks]);
+
   const activeChapterLabel = useMemo(() => `Lesson ${chapter.number}: ${chapter.title}`, [chapter.number, chapter.title]);
+  const filteredHeadings = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+    if (!query) return headings;
+    return headings.filter((heading) => heading.text.toLowerCase().includes(query));
+  }, [headings, searchTerm]);
 
   return (
     <div className="min-h-screen bg-slate-50/70 dark:bg-slate-950">
@@ -101,10 +145,15 @@ export function TutorialReader({ book, chapter, previous, next, headings, revisi
               {wideRead ? <Minimize2 className="size-4" /> : <Expand className="size-4" />}
               {wideRead ? "Normal view" : "Full read"}
             </button>
-            <div className="hidden min-w-[260px] items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900 md:flex">
+            <label className="hidden min-w-[320px] items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900 md:flex">
               <Search className="size-4" />
-              Search within this tutorial
-            </div>
+              <input
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Search within this lesson..."
+                className="w-full bg-transparent outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
+              />
+            </label>
           </div>
         </div>
       </div>
@@ -122,9 +171,9 @@ export function TutorialReader({ book, chapter, previous, next, headings, revisi
               </button>
             </div>
             <nav className="max-h-[72vh] space-y-1 overflow-y-auto pr-1 scrollbar-thin">
-              {book.chapters.map((item) => (
+              {book.chapters.map((item, index) => (
                 <Link
-                  key={item.slug}
+                  key={`${book.slug}-${item.slug}-${item.number}-${index}`}
                   href={`/tutorials/${book.slug}/${item.slug}`}
                   onClick={rememberChapterBeforeNavigation}
                   className={`block rounded-xl px-3 py-2.5 text-sm font-bold transition ${
@@ -153,11 +202,39 @@ export function TutorialReader({ book, chapter, previous, next, headings, revisi
               <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-600 dark:bg-slate-950 dark:text-slate-300">
                 {activeChapterLabel}
               </span>
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-600 dark:bg-slate-950 dark:text-slate-300">
+                Chapter {chapter.number} of {book.chapters.length}
+              </span>
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-600 dark:bg-slate-950 dark:text-slate-300">
+                Progress: {progressPercent}%
+              </span>
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-600 dark:bg-slate-950 dark:text-slate-300">
+                {readingTime} min read
+              </span>
             </div>
             <p className="text-sm font-black uppercase tracking-[0.26em] text-brand-600">Tutorial lesson</p>
             <h1 className="mt-3 max-w-5xl text-4xl font-black tracking-tight text-ink dark:text-white sm:text-5xl">
               {chapter.title}
             </h1>
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  toggleBookmark({
+                    title: `${book.title} - ${chapter.title}`,
+                    href: `/tutorials/${book.slug}/${chapter.slug}`,
+                    kind: "book"
+                  });
+                  setBookmarked((value) => !value);
+                }}
+                className="inline-flex items-center gap-2 rounded-xl bg-ink px-4 py-2.5 text-sm font-black text-white dark:bg-white dark:text-ink"
+              >
+                <Bookmark className="size-4" /> {bookmarked ? "Saved for later" : "Bookmark"}
+              </button>
+              <p className="text-sm leading-6 text-slate-500 dark:text-slate-400">
+                Save this chapter and come back without losing your place.
+              </p>
+            </div>
           </header>
 
           <div className="mx-auto max-w-5xl px-6 py-8 sm:px-9">
@@ -210,7 +287,7 @@ export function TutorialReader({ book, chapter, previous, next, headings, revisi
               <ListChecks className="size-5 text-brand-600" />
               <h2 className="font-black">On this page</h2>
             </div>
-            <Outline headings={headings} />
+            <Outline headings={filteredHeadings} searchTerm={searchTerm} />
           </aside>
         ) : null}
       </div>
@@ -231,14 +308,14 @@ export function TutorialReader({ book, chapter, previous, next, headings, revisi
               <Minimize2 className="size-4" />
             </button>
           </div>
-          <Outline headings={headings} />
+          <Outline headings={filteredHeadings} searchTerm={searchTerm} />
         </div>
       ) : null}
     </div>
   );
 }
 
-function Outline({ headings }: { headings: Heading[] }) {
+function Outline({ headings, searchTerm }: { headings: Heading[]; searchTerm: string }) {
   return (
     <nav className="max-h-[45vh] space-y-2 overflow-y-auto">
       {headings.length ? (
@@ -252,7 +329,9 @@ function Outline({ headings }: { headings: Heading[] }) {
           </a>
         ))
       ) : (
-        <p className="text-sm leading-6 text-slate-500">This chapter is mostly paragraph content.</p>
+        <p className="text-sm leading-6 text-slate-500">
+          {searchTerm ? "No sections match your search." : "This chapter is mostly paragraph content."}
+        </p>
       )}
     </nav>
   );

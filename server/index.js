@@ -2,6 +2,11 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const jwt = require("jsonwebtoken");
+const playgroundTemplates = require("./routes/templates");
+const playgroundProjects = require("./routes/playground/projects");
+const playgroundImport = require("./routes/playground/import");
+const playgroundExport = require("./routes/playground/export");
+const { authMiddleware } = require("./middleware/playground/auth");
 
 dotenv.config();
 
@@ -55,6 +60,11 @@ app.post("/api/auth/login", (req, res) => {
   });
   res.json({ token, user: { name: "CodeVerse Student", email, role: "student" } });
 });
+
+app.use("/api/playground/templates", playgroundTemplates);
+app.use("/api/playground/projects", authMiddleware, playgroundProjects);
+app.use("/api/playground/import", playgroundImport);
+app.use("/api/playground/export", playgroundExport);
 
 app.use((_req, res) => {
   res.status(404).json({ error: "Route not found" });

@@ -25,13 +25,33 @@ export default async function TutorialBookPage({ params }: { params: Promise<{ b
           <div className="mt-8 flex flex-wrap gap-3 text-sm font-bold text-cyan-100">
             <span className="rounded-full bg-white/10 px-4 py-2">{book.chapters.length} chapters</span>
             <span className="rounded-full bg-white/10 px-4 py-2">Tutorial reader</span>
+            <span className="rounded-full bg-white/10 px-4 py-2">Auto-saved reading progress</span>
           </div>
+          {book.chapters[0] ? (
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <Link
+                href={`/tutorials/${book.slug}/${book.chapters[0].slug}`}
+                className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-black text-ink dark:bg-cyan-300"
+              >
+                Start reading <ArrowRight className="size-4" />
+              </Link>
+              <Link
+                href={`/tutorials/${book.slug}/full`}
+                className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-black text-white transition hover:bg-white/15"
+              >
+                Open full book
+              </Link>
+              <p className="text-sm leading-6 text-slate-300">
+                Open a chapter and the reader will remember your place the next time you return.
+              </p>
+            </div>
+          ) : null}
         </section>
 
         <section className="mt-8 grid gap-4">
-          {book.chapters.map((chapter) => (
+          {book.chapters.map((chapter, index) => (
             <Link
-              key={chapter.slug}
+              key={`${book.slug}-${chapter.slug}-${chapter.number}-${index}`}
               href={`/tutorials/${book.slug}/${chapter.slug}`}
               className="group grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-1 hover:border-brand-500 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900 md:grid-cols-[72px_1fr_auto] md:items-center"
             >

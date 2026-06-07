@@ -2,14 +2,19 @@ import Link from "next/link";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { AnimatedHero } from "@/components/animated-hero";
 import { CourseCard } from "@/components/course-card";
+import { LearningHub } from "@/components/learning-hub";
 import { LearningChart, SkillChart } from "@/components/charts";
 import { Section } from "@/components/section";
+import { getLibraryBooks } from "@/lib/books";
 import { categories, courses, learningSheets, mentors, supportFeatures, testimonials } from "@/lib/data";
 
 export default function HomePage() {
+  const books = getLibraryBooks();
+
   return (
     <>
       <AnimatedHero />
+      <LearningHub books={books} />
       <Section
         eyebrow="Learning paths"
         title="Learn from basics, then practice for real interviews"
