@@ -1,8 +1,61 @@
+import Link from "next/link";
 import { CourseCard } from "@/components/course-card";
 import { Section } from "@/components/section";
 import { courses, learningSheets, mockTests, tutorialTracks } from "@/lib/data";
 
-export default function CoursesPage() {
+const filterLabels = [
+  { key: "all", label: "All" },
+  { key: "dsa", label: "DSA" },
+  { key: "web", label: "Web" },
+  { key: "programming", label: "Programming" },
+  { key: "data", label: "Data" },
+  { key: "ai-ml", label: "AI/ML" },
+  { key: "backend", label: "Backend" },
+  { key: "cs-core", label: "CS Core" },
+  { key: "projects", label: "Projects" }
+] as const;
+
+const projectCourseSlugs = new Set([
+  "react-product-engineering",
+  "node-api-studio",
+  "python-backend-development",
+  "python-data-analysis",
+  "machine-learning-launchpad",
+  "deep-learning-visualized"
+]);
+
+type CourseFilter = (typeof filterLabels)[number]["key"];
+
+function resolveFilter(value: string | string[] | undefined): CourseFilter {
+  const raw = Array.isArray(value) ? value[0] : value;
+  return filterLabels.some((filter) => filter.key === raw) ? (raw as CourseFilter) : "all";
+}
+
+function filterCourses(activeFilter: CourseFilter) {
+  if (activeFilter === "all") {
+    return courses;
+  }
+
+  if (activeFilter === "web") {
+    return courses.filter((course) => course.category === "Web" || course.slug === "javascript-mastery" || course.title.toLowerCase().includes("javascript"));
+  }
+
+  if (activeFilter === "cs-core") {
+    return courses.filter((course) => course.category === "Interview");
+  }
+
+  if (activeFilter === "projects") {
+    return courses.filter((course) => projectCourseSlugs.has(course.slug));
+  }
+
+  return courses.filter((course) => course.category.toLowerCase() === activeFilter.toLowerCase());
+}
+
+export default async function CoursesPage({ searchParams }: { searchParams?: Promise<{ category?: string | string[] }> }) {
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const activeFilter = resolveFilter(resolvedSearchParams?.category);
+  const visibleCourses = filterCourses(activeFilter);
+
   return (
     <>
       <Section
@@ -11,20 +64,31 @@ export default function CoursesPage() {
         copy="Courses are split into small sections with lessons, practice questions, quizzes, notes, doubt help, progress tracking and certificates."
       >
         <div className="mb-6 flex flex-wrap gap-2">
-          {["All", "DSA", "Web", "Programming", "Interview", "Data", "AI/ML", "Backend"].map((filter) => (
-            <button
-              key={filter}
-              className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-600 transition hover:border-brand-500 hover:text-brand-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+          {filterLabels.map((filter) => (
+            <Link
+              key={filter.key}
+              href={`/courses?category=${filter.key}`}
+              aria-current={activeFilter === filter.key ? "page" : undefined}
+              className={`rounded-full border px-4 py-2 text-sm font-bold transition ${
+                activeFilter === filter.key
+                  ? "border-brand-500 bg-brand-50 text-brand-700 dark:border-cyan-400 dark:bg-cyan-950/40 dark:text-cyan-200"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-brand-500 hover:text-brand-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+              }`}
             >
-              {filter}
-            </button>
+              {filter.label}
+            </Link>
           ))}
         </div>
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {courses.map((course) => (
+          {visibleCourses.map((course) => (
             <CourseCard key={course.slug} course={course} />
           ))}
         </div>
+        {!visibleCourses.length ? (
+          <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+            No courses matched this category yet.
+          </div>
+        ) : null}
       </Section>
 
       <Section

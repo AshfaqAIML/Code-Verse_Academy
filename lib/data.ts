@@ -21,12 +21,12 @@ import {
 } from "lucide-react";
 
 export const categories = [
-  { name: "Web Development", href: "/courses", icon: Code2, count: "Start with HTML, CSS and JS" },
-  { name: "DSA & Problem Solving", href: "/practice", icon: Trophy, count: "Arrays to graphs, step by step" },
-  { name: "Data Science", href: "/data-science", icon: BarChart3, count: "Python, SQL and charts" },
-  { name: "AI/ML", href: "/ai-ml", icon: BrainCircuit, count: "Models explained simply" },
-  { name: "CS Core", href: "/practice", icon: Database, count: "DBMS, OS, OOP and networks" },
-  { name: "Projects", href: "/projects", icon: FolderKanban, count: "Build portfolio-ready apps" }
+  { name: "Web Development", href: "/courses?category=web", icon: Code2, count: "Start with HTML, CSS and JS" },
+  { name: "DSA & Problem Solving", href: "/courses?category=dsa", icon: Trophy, count: "Arrays to graphs, step by step" },
+  { name: "Data Science", href: "/courses?category=data", icon: BarChart3, count: "Python, SQL and charts" },
+  { name: "AI/ML", href: "/courses?category=ai-ml", icon: BrainCircuit, count: "Models explained simply" },
+  { name: "CS Core", href: "/courses?category=cs-core", icon: Database, count: "DBMS, OS, OOP and networks" },
+  { name: "Projects", href: "/courses?category=projects", icon: FolderKanban, count: "Build portfolio-ready apps" }
 ];
 
 export const courses = [
