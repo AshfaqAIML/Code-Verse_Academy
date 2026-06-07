@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { AnimatedHero } from "@/components/animated-hero";
-import { CourseCard } from "@/components/course-card";
 import { LearningHub } from "@/components/learning-hub";
 import { LearningChart, SkillChart } from "@/components/charts";
 import { Section } from "@/components/section";
@@ -10,20 +9,6 @@ import { categories, courses, learningSheets, mentors, supportFeatures, testimon
 
 export default function HomePage() {
   const books = getLibraryBooks();
-  const backendBooks = [
-    { order: "01", slug: "python-backend-foundation", fallback: "Python Backend Foundation" },
-    { order: "02", slug: "backend-development-and-databases", fallback: "Backend Development and Databases" },
-    { order: "03", slug: "advanced-backend-and-system-design", fallback: "Advanced Backend and System Design" }
-  ].map((item) => {
-    const book = books.find((entry) => entry.slug === item.slug);
-    return {
-      slug: item.slug,
-      order: item.order,
-      title: book?.title ?? item.fallback,
-      href: book ? `/tutorials/${book.slug}` : "/tutorials",
-      description: book?.description ?? ""
-    };
-  });
 
   return (
     <>
@@ -49,14 +34,6 @@ export default function HomePage() {
               </Link>
             );
           })}
-        </div>
-      </Section>
-
-      <Section eyebrow="Featured courses" title="Structured like documentation, taught like a product lab">
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {courses.slice(0, 6).map((course) => (
-            <CourseCard key={course.slug} course={course} />
-          ))}
         </div>
       </Section>
 
@@ -119,36 +96,6 @@ export default function HomePage() {
             </div>
           <SkillChart />
           </div>
-        </div>
-      </Section>
-
-      <Section
-        eyebrow="Backend path"
-        title="Three backend books in sequence"
-        copy="Follow them in order: foundation first, then backend development, then advanced backend and system design."
-      >
-        <div className="grid gap-4">
-          {backendBooks.map((book) => (
-            <Link
-              key={book.slug}
-              href={book.href}
-              className="group flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white p-5 transition hover:-translate-y-1 hover:border-brand-500 hover:shadow-xl hover:shadow-cyan-100 dark:border-slate-800 dark:bg-slate-900 dark:hover:shadow-black/20 sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div className="flex items-start gap-4">
-                <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-ink text-sm font-black text-white dark:bg-white dark:text-ink">
-                  {book.order}
-                </div>
-                <div>
-                  <p className="text-xs font-black uppercase tracking-[0.22em] text-brand-600">Backend book {book.order}</p>
-                  <h3 className="mt-2 text-xl font-black">{book.title}</h3>
-                  {book.description ? (
-                    <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">{book.description}</p>
-                  ) : null}
-                </div>
-              </div>
-              <ArrowRight className="size-5 text-brand-600 transition group-hover:translate-x-1" />
-            </Link>
-          ))}
         </div>
       </Section>
 

@@ -118,15 +118,16 @@ export function LearningHub({ books }: Props) {
             <h2 className="mt-3 text-2xl font-black tracking-tight">HTML, CSS, and JavaScript books</h2>
             <div className="mt-5 space-y-3">
               {readingBooks.map((book) => {
-                const progress = getBookProgress(book.slug);
+                const progress = mounted ? getBookProgress(book.slug) : null;
+                const href = `/tutorials/${book.slug}/${progress?.lastChapterSlug ?? "chapter-01"}`;
                 return (
                   <Link
                     key={book.slug}
-                    href={`/tutorials/${book.slug}/${progress?.lastChapterSlug ?? "chapter-01"}`}
+                    href={href}
                     onClick={() =>
                       recordRecentLearning({
                         title: book.title,
-                        href: `/tutorials/${book.slug}/${progress?.lastChapterSlug ?? "chapter-01"}`,
+                        href,
                         kind: "book"
                       })
                     }
