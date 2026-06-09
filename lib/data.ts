@@ -339,16 +339,70 @@ export const learningSheets = [
   "Python backend roadmap"
 ];
 
-export const mentors = [
+export type Mentor = {
+  name: string;
+  initials: string;
+  role: string;
+  platform: string;
+  rating: string;
+  text: string;
+  href?: string;
+};
+
+export const mentors: Mentor[] = [
   {
-    name: "Aarav Mehta",
-    role: "Senior Software Engineer",
-    text: "Explains DSA, system design and interview thinking with simple examples."
+    name: "Alex Freberg",
+    initials: "AF",
+    role: "Data Analytics Mentor & YouTuber",
+    platform: "YouTube (1M+ subscribers)",
+    rating: "4.8★",
+    text: "Teaches SQL, Power BI, Tableau, and Excel in structured paths. Breaks down practical data portfolio workflows step-by-step for complete career transitions.",
+    href: "https://www.youtube.com/@AlexTheAnalyst"
   },
   {
-    name: "Naina Kapoor",
-    role: "Data and AI Mentor",
-    text: "Teaches Python, SQL, dashboards and ML projects in small steps."
+    name: "Josh Starmer, PhD",
+    initials: "JS",
+    role: "Data Science & Machine Learning Educator",
+    platform: "YouTube (1.2M+ subscribers)",
+    rating: "4.8★",
+    text: "Demystifies complex statistics, data science models, and neural networks using highly visual diagrams and jargon-free explanations.",
+    href: "https://www.youtube.com/@StatQuest"
+  },
+  {
+    name: "Jose Portilla",
+    initials: "JP",
+    role: "Head of Data Science, Pierian Training",
+    platform: "Udemy (3M+ students)",
+    rating: "4.7★",
+    text: "Explains Python programming, relational databases (SQL), and advanced machine learning pipelines with clear coding exercises and clean code architectures.",
+    href: "https://www.udemy.com/user/joseportilla/"
+  },
+  {
+    name: "Angela Yu",
+    initials: "AY",
+    role: "Lead Web & App Development Instructor",
+    platform: "Udemy (2M+ students)",
+    rating: "4.8★",
+    text: "Masters the art of explaining frontend and backend logic simply. Combines beautiful, intuitive visuals with immersive programming challenges to keep concepts easy to digest.",
+    href: "https://www.udemy.com/user/4b4368a3-b5c8-452e-aa65-9d8a4e4c6c8c/"
+  },
+  {
+    name: "Colt Steele",
+    initials: "CS",
+    role: "Developer & Former Bootcamp Director",
+    platform: "Udemy (1.5M+ students)",
+    rating: "4.7★",
+    text: "Renowned for teaching JavaScript, React, backend development, and web fundamentals. Focuses on conversational, engaging explanations that make tricky concepts feel effortless.",
+    href: "https://www.udemy.com/user/coltsteele/"
+  },
+  {
+    name: "Hitesh Choudhary",
+    initials: "HC",
+    role: "Engineer & Technology Educator",
+    platform: "YouTube & Udemy (1.3M+ community)",
+    rating: "4.8★",
+    text: "Specializes in bringing clarity to complex backend frameworks, database design, system architectures, and deployment pipelines using hands-on production builds.",
+    href: "https://www.youtube.com/@HiteshChoudharydotin"
   }
 ];
 

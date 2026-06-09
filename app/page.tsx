@@ -115,18 +115,24 @@ export default function HomePage() {
       </Section>
 
       <Section eyebrow="Mentors" title="Guidance from people who explain things simply">
-        <div className="grid gap-5 md:grid-cols-2">
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {mentors.map((mentor) => (
             <div key={mentor.name} className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
               <div className="grid size-16 place-items-center rounded-2xl bg-gradient-to-br from-brand-500 to-leaf text-xl font-black text-white">
-                {mentor.name
-                  .split(" ")
-                  .map((part) => part[0])
-                  .join("")}
+                {mentor.initials}
               </div>
-              <h3 className="mt-5 text-2xl font-black">{mentor.name}</h3>
+              <h3 className="mt-5 text-xl font-black">{mentor.name}</h3>
               <p className="mt-1 text-sm font-bold text-brand-700 dark:text-cyan-300">{mentor.role}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">{mentor.platform}</span>
+                <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700 dark:bg-amber-950 dark:text-amber-200">{mentor.rating}</span>
+              </div>
               <p className="mt-4 leading-7 text-slate-600 dark:text-slate-300">{mentor.text}</p>
+              {mentor.href ? (
+                <a href={mentor.href} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-brand-700 hover:underline dark:text-cyan-300">
+                  Visit profile <ArrowRight className="size-3.5" />
+                </a>
+              ) : null}
             </div>
           ))}
         </div>

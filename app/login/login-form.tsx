@@ -2,20 +2,42 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Github, Loader2, Lock, Mail } from "lucide-react";
-import { useState } from "react";
+import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
+import { useState, useEffect } from "react";
+import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 
 type Props = {
   nextPath: string;
 };
 
-export default function LoginForm({ nextPath }: Props) {
+function doLogin(token: string, user: { name: string; email: string; role: string }, router: ReturnType<typeof useRouter>, nextPath: string) {
+  window.localStorage.setItem("codeverse-token", token);
+  window.localStorage.setItem("codeverse-user", JSON.stringify(user));
+  window.dispatchEvent(new Event("codeverse-auth"));
+  fetch("/api/auth/streak", { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }).catch(() => {});
+  router.push(nextPath);
+  router.refresh();
+}
+
+function LoginFormInner({ nextPath }: Props) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [streakData, setStreakData] = useState<{ currentStreak: number; longestStreak: number } | null>(null);
+
+  useEffect(() => {
+    const token = window.localStorage.getItem("codeverse-token");
+    if (token) {
+      fetch("/api/auth/streak", { headers: { Authorization: `Bearer ${token}` } })
+        .then((r) => r.json())
+        .then((d) => setStreakData(d))
+        .catch(() => {});
+    }
+  }, []);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -34,15 +56,36 @@ export default function LoginForm({ nextPath }: Props) {
         throw new Error(data.error || "Login failed. Please try again.");
       }
 
-      window.localStorage.setItem("codeverse-token", data.token);
-      window.localStorage.setItem("codeverse-user", JSON.stringify(data.user));
-      window.dispatchEvent(new Event("codeverse-auth"));
-      router.push(nextPath);
-      router.refresh();
+      doLogin(data.token, data.user, router, nextPath);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Login failed. Please try again.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleGoogleSuccess(credentialResponse: { credential?: string }) {
+    if (!credentialResponse.credential) return;
+    setGoogleLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential: credentialResponse.credential }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Google sign-in failed.");
+      }
+
+      doLogin(data.token, data.user, router, nextPath);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Google sign-in failed. Please try again.");
+    } finally {
+      setGoogleLoading(false);
     }
   }
 
@@ -54,8 +97,9 @@ export default function LoginForm({ nextPath }: Props) {
           <h1 className="mt-4 text-4xl font-black tracking-tight">Resume your streak and keep building.</h1>
           <p className="mt-4 leading-7 text-slate-300">This demo now issues signed session tokens and validates them through the shared API layer.</p>
           <div className="mt-10 rounded-2xl bg-white/10 p-5">
-            <p className="text-3xl font-black">21 days</p>
+            <p className="text-3xl font-black">{streakData ? `${streakData.currentStreak} days` : "—"}</p>
             <p className="text-sm text-slate-300">current learning streak</p>
+            <p className="mt-2 text-xs text-slate-400">Best: {streakData ? `${streakData.longestStreak} days` : "—"}</p>
           </div>
         </div>
         <form className="p-8" onSubmit={handleSubmit}>
@@ -110,14 +154,42 @@ export default function LoginForm({ nextPath }: Props) {
             {loading ? <Loader2 className="size-5 animate-spin" /> : null}
             {loading ? "Signing in..." : "Sign in"}
           </button>
-          <button type="button" className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-3 font-black dark:border-slate-800">
-            <Github className="size-5" /> Continue with GitHub
-          </button>
-          <p className="mt-6 text-center text-sm text-slate-500">
+          <div className="mt-4">
+            {googleLoading ? (
+              <div className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-3 font-black dark:border-slate-800">
+                <Loader2 className="size-5 animate-spin" /> Connecting...
+              </div>
+            ) : (
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => setError("Google sign-in failed.")}
+                theme="outline"
+                size="large"
+                shape="rectangular"
+                text="continue_with"
+                width="100%"
+              />
+            )}
+          </div>
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-200 dark:border-slate-800" /></div>
+            <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-slate-400 dark:bg-slate-900">or</span></div>
+          </div>
+          <p className="text-center text-sm text-slate-500">
             New here? <Link className="font-black text-brand-700 dark:text-cyan-300" href="/register">Create an account</Link>
           </p>
         </form>
       </div>
     </div>
+  );
+}
+
+export default function LoginForm({ nextPath }: Props) {
+  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
+  if (!clientId) return <LoginFormInner nextPath={nextPath} />;
+  return (
+    <GoogleOAuthProvider clientId={clientId}>
+      <LoginFormInner nextPath={nextPath} />
+    </GoogleOAuthProvider>
   );
 }
