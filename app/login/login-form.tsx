@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Loader2, Lock, Mail, Sparkles, Code2, Zap, Flame } from "lucide-react";
+import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 
 declare global {
@@ -22,6 +22,15 @@ type Props = {
   nextPath: string;
 };
 
+const GOOGLE_ICON = (
+  <svg viewBox="0 0 24 24" className="w-5 h-5" aria-hidden="true">
+    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
+    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+  </svg>
+);
+
 function doLogin(token: string, user: { name: string; email: string; role: string }, router: ReturnType<typeof useRouter>, nextPath: string) {
   window.localStorage.setItem("codeverse-token", token);
   window.localStorage.setItem("codeverse-user", JSON.stringify(user));
@@ -29,89 +38,6 @@ function doLogin(token: string, user: { name: string; email: string; role: strin
   fetch("/api/auth/streak", { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }).catch(() => {});
   router.push(nextPath);
   router.refresh();
-}
-
-function MatrixRain({ className = "" }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
-
-    const chars = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789<>/{}[]|&^%$#@!";
-    const fontSize = 14;
-    const columns = Math.floor(canvas.width / fontSize);
-    const drops: number[] = Array.from({ length: columns }, () => Math.random() * -100);
-
-    function draw() {
-      if (!ctx || !canvas) return;
-      ctx.fillStyle = "rgba(5, 5, 20, 0.08)";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "#22d3ee";
-      ctx.font = `${fontSize}px monospace`;
-
-      for (let i = 0; i < drops.length; i++) {
-        const char = chars[Math.floor(Math.random() * chars.length)];
-        const x = i * fontSize;
-        const y = drops[i] * fontSize;
-        ctx.fillStyle = Math.random() > 0.97 ? "#67e8f9" : "#22d3ee";
-        ctx.globalAlpha = Math.max(0.1, 1 - (y / canvas.height) * 0.8);
-        ctx.fillText(char, x, y);
-        ctx.globalAlpha = 1;
-        if (y > canvas.height && Math.random() > 0.98) {
-          drops[i] = 0;
-        }
-        drops[i] += 0.5 + Math.random() * 0.5;
-      }
-      requestAnimationFrame(draw);
-    }
-
-    const anim = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(anim);
-  }, []);
-
-  return <canvas ref={canvasRef} className={`absolute inset-0 ${className}`} />;
-}
-
-function AnimatedGrid() {
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(34,211,238,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(34,211,238,0.03)_1px,transparent_1px)] bg-[size:60px_60px]" />
-      <div className="absolute top-1/4 -left-32 w-96 h-96 bg-cyan-500/10 rounded-full blur-[120px]" />
-      <div className="absolute bottom-1/4 -right-32 w-80 h-80 bg-blue-500/10 rounded-full blur-[100px]" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-violet-500/5 rounded-full blur-[150px]" />
-    </div>
-  );
-}
-
-function CodeSnippet() {
-  const lines = [
-    { text: "import { learn } from 'codeverse'", color: "text-cyan-300" },
-    { text: "", color: "" },
-    { text: "const user = await auth.signIn({", color: "text-slate-300" },
-    { text: "  email: 'student@codeverse.dev',", color: "text-emerald-300" },
-    { text: "  password: '••••••••'", color: "text-emerald-300" },
-    { text: "})", color: "text-slate-300" },
-    { text: "", color: "" },
-    { text: "// Welcome back! Streak: 12 days 🔥", color: "text-slate-500" },
-    { text: "const dashboard = await user.resume()", color: "text-cyan-300" },
-  ];
-
-  return (
-    <div className="font-mono text-xs leading-6 space-y-0.5">
-      {lines.map((line, i) => (
-        <div key={i} className={`${line.color} ${line.text.startsWith("//") ? "italic" : ""}`}>
-          <span className="text-slate-600 mr-3 select-none">{String(i + 1).padStart(2, "0")}</span>
-          {line.text || <span className="text-slate-600">{" ".repeat(42)}</span>}
-        </div>
-      ))}
-    </div>
-  );
 }
 
 function LoginFormInner({ nextPath }: Props) {
@@ -122,50 +48,7 @@ function LoginFormInner({ nextPath }: Props) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [streakData, setStreakData] = useState<{ currentStreak: number; longestStreak: number } | null>(null);
-  const [mounted, setMounted] = useState(false);
-  const googleBtnRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => { setMounted(true); }, []);
-
-  useEffect(() => {
-    const token = window.localStorage.getItem("codeverse-token");
-    if (token) {
-      fetch("/api/auth/streak", { headers: { Authorization: `Bearer ${token}` } })
-        .then((r) => r.json())
-        .then((d) => {
-          if (d && typeof d.currentStreak === "number") setStreakData(d);
-        })
-        .catch(() => {});
-    }
-  }, []);
-
-  useEffect(() => {
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-    if (!clientId || !googleBtnRef.current || !mounted) return;
-
-    const script = document.createElement("script");
-    script.src = "https://accounts.google.com/gsi/client";
-    script.async = true;
-    script.defer = true;
-    script.onload = () => {
-      if (window.google?.accounts?.id) {
-        window.google.accounts.id.initialize({
-          client_id: clientId,
-          callback: handleGoogleCredential,
-        });
-        window.google.accounts.id.renderButton(googleBtnRef.current!, {
-          theme: "outline",
-          size: "large",
-          shape: "rectangular",
-          text: "continue_with",
-          width: googleBtnRef.current?.clientWidth || 300,
-        });
-      }
-    };
-    document.body.appendChild(script);
-    return () => { script.remove(); };
-  }, [mounted]);
+  const clientId = typeof window !== "undefined" ? process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID : undefined;
 
   const handleGoogleCredential = useCallback(async (response: { credential: string }) => {
     if (!response.credential) return;
@@ -192,6 +75,30 @@ function LoginFormInner({ nextPath }: Props) {
     }
   }, [router, nextPath]);
 
+  async function handleGoogleSignIn() {
+    if (!clientId) return;
+    setGoogleLoading(true);
+
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      if (window.google?.accounts?.id) {
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: handleGoogleCredential,
+        });
+        (window.google.accounts.id as any).prompt?.();
+        setTimeout(() => setGoogleLoading(false), 3000);
+      } else {
+        setGoogleLoading(false);
+      }
+    };
+    script.onerror = () => setGoogleLoading(false);
+    document.body.appendChild(script);
+  }
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
@@ -217,168 +124,111 @@ function LoginFormInner({ nextPath }: Props) {
     }
   }
 
-  if (!mounted) {
-    return <div className="min-h-screen bg-[#050514]" />;
-  }
-
   return (
-    <div className="relative min-h-screen bg-[#050514] overflow-hidden">
-      <MatrixRain className="opacity-40" />
-      <AnimatedGrid />
-
-      <div className="relative z-10 flex min-h-screen flex-col lg:flex-row">
-        {/* Left Brand Panel */}
-        <div className="relative flex flex-col justify-between lg:w-1/2 p-8 lg:p-12 xl:p-16">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-500 shadow-lg shadow-cyan-500/25">
-              <Code2 className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-xl font-black text-white tracking-tight">CodeVerse<span className="text-cyan-400">.</span></span>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-500 shadow-lg shadow-cyan-500/20 mb-4">
+            <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+            </svg>
           </div>
-
-          <div className="hidden lg:block max-w-lg">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-cyan-300 mb-6">
-              <Sparkles className="w-3.5 h-3.5" />
-              AI-Powered Learning Platform
-            </div>
-            <h1 className="text-4xl xl:text-5xl font-black text-white leading-tight tracking-tight">
-              Build skills<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400">ship real projects</span>
-            </h1>
-            <p className="mt-4 text-base leading-7 text-slate-400 max-w-md">
-              Interactive lessons, AI labs, coding playgrounds, and structured practice paths — all in one focused workspace.
-            </p>
-            <div className="mt-8 rounded-2xl border border-white/5 bg-white/[0.03] p-5 backdrop-blur-sm">
-              <CodeSnippet />
-            </div>
-          </div>
-
-          <div className="hidden lg:flex items-center gap-8 text-sm text-slate-500">
-            <span>© 2026 CodeVerse</span>
-            <span className="flex items-center gap-1.5">
-              <Zap className="w-3.5 h-3.5 text-cyan-400" />
-              128K learners
-            </span>
-          </div>
+          <h1 className="text-2xl font-bold text-white">CodeVerse Academy</h1>
+          <p className="text-sm text-slate-400 mt-1">Your personal productivity operating system</p>
         </div>
 
-        {/* Right Auth Panel */}
-        <div className="relative flex items-center justify-center lg:w-1/2 p-6 lg:p-12">
-          {/* Streak card - floating above form */}
-          <div className={`absolute top-8 right-8 lg:top-12 lg:right-12 transition-all duration-700 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"}`}>
-            <div className="rounded-2xl bg-white/[0.04] border border-white/10 backdrop-blur-xl px-5 py-4 shadow-2xl shadow-black/30">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500/20 to-rose-500/20 border border-orange-500/20">
-                  <Flame className="w-5 h-5 text-orange-400" />
-                </div>
-                <div>
-                  <p className="text-2xl font-black text-white">{streakData ? `${streakData.currentStreak}` : "—"}</p>
-                  <p className="text-xs text-slate-500">day streak</p>
-                </div>
-                <div className="ml-3 pl-3 border-l border-white/10">
-                  <p className="text-sm font-bold text-slate-300">Best</p>
-                  <p className="text-lg font-black text-cyan-300">{streakData ? `${streakData.longestStreak}` : "—"}</p>
-                </div>
-              </div>
+        {/* Card */}
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 backdrop-blur-xl p-8 shadow-2xl shadow-black/40">
+          <h2 className="text-xl font-semibold text-white">Welcome back</h2>
+          <p className="text-sm text-slate-400 mt-1">Sign in to continue your journey</p>
+
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">Email</label>
+              <input
+                className="w-full rounded-xl border border-slate-800 bg-slate-900/80 px-4 py-2.5 text-sm text-white outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition placeholder:text-slate-600"
+                placeholder="name@example.com"
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                required
+              />
             </div>
-          </div>
 
-          <div className={`w-full max-w-md transition-all duration-700 delay-150 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
-            <div className="rounded-[24px] border border-white/10 bg-white/[0.04] backdrop-blur-2xl shadow-2xl shadow-black/40 p-8 lg:p-10">
-              <div className="mb-8">
-                <h2 className="text-2xl font-black text-white">Welcome back</h2>
-                <p className="mt-2 text-sm text-slate-400">Sign in to continue your learning journey.</p>
-              </div>
-
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <div>
-                  <label className="block text-sm font-bold text-slate-300 mb-1.5">Email</label>
-                  <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 focus-within:border-cyan-400/50 focus-within:shadow-[0_0_20px_rgba(34,211,238,0.08)] transition-all duration-300">
-                    <Mail className="w-4 h-4 text-slate-500 shrink-0" />
-                    <input
-                      className="w-full bg-transparent text-white outline-none text-sm placeholder:text-slate-600"
-                      placeholder="student@codeverse.dev"
-                      type="email"
-                      value={email}
-                      onChange={(event) => setEmail(event.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-bold text-slate-300 mb-1.5">Password</label>
-                  <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 focus-within:border-cyan-400/50 focus-within:shadow-[0_0_20px_rgba(34,211,238,0.08)] transition-all duration-300">
-                    <Lock className="w-4 h-4 text-slate-500 shrink-0" />
-                    <input
-                      className="w-full bg-transparent text-white outline-none text-sm placeholder:text-slate-600"
-                      placeholder="••••••••"
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(event) => setPassword(event.target.value)}
-                      minLength={6}
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((current) => !current)}
-                      className="rounded-lg p-1 text-slate-500 hover:text-slate-300 transition"
-                      aria-label={showPassword ? "Hide password" : "Show password"}
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                {error ? (
-                  <p className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm font-medium text-red-300">
-                    {error}
-                  </p>
-                ) : null}
-
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">Password</label>
+              <div className="relative">
+                <input
+                  className="w-full rounded-xl border border-slate-800 bg-slate-900/80 px-4 py-2.5 pr-10 text-sm text-white outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition placeholder:text-slate-600"
+                  placeholder="Enter your password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  minLength={6}
+                  required
+                />
                 <button
-                  className="relative w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-3 font-black text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 hover:from-cyan-400 hover:to-blue-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none transition-all duration-300"
-                  disabled={loading}
+                  type="button"
+                  onClick={() => setShowPassword((current) => !current)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
-                  {loading ? "Signing in..." : "Sign in"}
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
+              </div>
+            </div>
 
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/10" /></div>
-                  <div className="relative flex justify-center"><span className="bg-[#050514] px-3 text-xs text-slate-500 uppercase">or continue with</span></div>
-                </div>
+            <div className="flex justify-end">
+              <Link href="/forgot-password" className="text-sm text-slate-400 hover:text-cyan-400 transition">
+                Forgot password?
+              </Link>
+            </div>
 
-                <div className="flex justify-center min-h-[44px]">
-                  {googleLoading ? (
-                    <div className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 px-5 py-3 text-sm font-medium text-slate-400">
-                      <Loader2 className="w-5 h-5 animate-spin" /> Connecting...
-                    </div>
-                  ) : process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
-                    <div ref={googleBtnRef} className="w-full flex justify-center"></div>
-                  ) : (
-                    <p className="text-xs text-slate-600">Google sign-in not configured</p>
-                  )}
-                </div>
-              </form>
-
-              <p className="mt-8 text-center text-sm text-slate-500">
-                New to CodeVerse?{" "}
-                <Link className="font-bold text-cyan-400 hover:text-cyan-300 transition" href="/register">
-                  Create account
-                </Link>
+            {error ? (
+              <p className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-2.5 text-sm text-red-300">
+                {error}
               </p>
+            ) : null}
+
+            <button
+              className="w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/30 hover:from-cyan-400 hover:to-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+              disabled={loading}
+            >
+              {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Sign in"}
+            </button>
+          </form>
+
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-slate-800" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-slate-900/60 px-3 text-xs text-slate-500">Or</span>
             </div>
           </div>
 
-          {/* Mobile footer */}
-          <div className="absolute bottom-6 left-6 right-6 flex lg:hidden items-center justify-between text-xs text-slate-600">
-            <span>© 2026 CodeVerse</span>
-            <span className="flex items-center gap-1">
-              <Zap className="w-3 h-3 text-cyan-400" />
-              128K learners
-            </span>
-          </div>
+          {/* Google Button */}
+          <button
+            onClick={handleGoogleSignIn}
+            disabled={googleLoading || !clientId}
+            className="w-full inline-flex items-center justify-center gap-3 rounded-xl border border-slate-800 bg-slate-900/80 px-4 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800/80 hover:border-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+          >
+            {googleLoading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              GOOGLE_ICON
+            )}
+            {googleLoading ? "Connecting..." : "Continue with Google"}
+          </button>
+
+          <p className="mt-6 text-center text-sm text-slate-500">
+            Don&apos;t have an account?{" "}
+            <Link className="font-medium text-cyan-400 hover:text-cyan-300 transition" href="/register">
+              Sign up
+            </Link>
+          </p>
         </div>
       </div>
     </div>
