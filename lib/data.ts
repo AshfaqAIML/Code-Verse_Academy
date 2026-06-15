@@ -216,7 +216,7 @@ export const navItems = [
   { label: "Community", href: "/community", icon: Users },
   { label: "Certificates", href: "/certifications", icon: BadgeCheck },
   { label: "Blog", href: "/blog", icon: FileQuestion },
-  { label: "Studio", href: "/sketch-studio", icon: BookOpen },
+  { label: "Studio", href: "https://slide-sketch-studio-dsa6m52xm-dar-ishfaq-backends-projects.vercel.app", icon: BookOpen, external: true },
   { label: "Admin", href: "/admin", icon: ShieldCheck }
 ];
 

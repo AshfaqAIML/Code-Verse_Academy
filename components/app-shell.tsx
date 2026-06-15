@@ -159,6 +159,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {visibleNavItems.map((item) => {
             const active = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
             const Icon = item.icon;
+            const isExternal = "external" in item;
+            if (isExternal) {
+              return (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => { setOpen(false); setPracticePanelOpen(false); }}
+                  className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition text-slate-600 hover:bg-slate-100 hover:text-ink dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-white"
+                >
+                  <Icon className="size-4" />
+                  {item.label}
+                </a>
+              );
+            }
             return (
               <Link
                 key={item.href}
