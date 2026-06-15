@@ -1,5 +1,6 @@
 export type DashboardStats = {
   streak: number;
+  longestStreak: number;
   xp: number;
   completed: number;
 };
@@ -20,13 +21,14 @@ function readPracticeMemory(): { completed: string[]; practiceDates: string[] } 
   }
 }
 
+function dateKey(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 function calculateStreak(practiceDates: string[]): number {
   const dates = new Set(practiceDates);
   let streak = 0;
   const cursor = new Date();
-  function dateKey(d: Date) {
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  }
   while (dates.has(dateKey(cursor))) {
     streak += 1;
     cursor.setDate(cursor.getDate() - 1);
@@ -34,12 +36,50 @@ function calculateStreak(practiceDates: string[]): number {
   return streak;
 }
 
+function calculateLongestStreak(practiceDates: string[]): number {
+  if (!practiceDates.length) return 0;
+  const unique = [...new Set(practiceDates)].sort();
+  let longest = 1;
+  let current = 1;
+  for (let i = 1; i < unique.length; i++) {
+    const prev = new Date(unique[i - 1]);
+    const curr = new Date(unique[i]);
+    const diff = (curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24);
+    if (diff === 1) {
+      current++;
+      if (current > longest) longest = current;
+    } else {
+      current = 1;
+    }
+  }
+  return longest;
+}
+
 export function getDashboardStats(): DashboardStats {
   const memory = readPracticeMemory();
   const streak = calculateStreak(memory.practiceDates);
+  const longestStreak = calculateLongestStreak(memory.practiceDates);
   const completed = memory.completed.length;
   const xp = completed * 50;
-  return { streak, xp, completed };
+  return { streak, longestStreak, xp, completed };
+}
+
+export type MonthActivity = {
+  year: number;
+  month: number;
+  days: { date: number; active: boolean }[];
+};
+
+export function getMonthActivity(year: number, month: number): MonthActivity {
+  const memory = readPracticeMemory();
+  const dates = new Set(memory.practiceDates);
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const days: { date: number; active: boolean }[] = [];
+  for (let d = 1; d <= daysInMonth; d++) {
+    const key = `${year}-${String(month).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    days.push({ date: d, active: dates.has(key) });
+  }
+  return { year, month, days };
 }
 
 export type HomeStats = {
