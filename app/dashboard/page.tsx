@@ -3,24 +3,34 @@ import { LearningChart, SkillChart } from "@/components/charts";
 import { Section } from "@/components/section";
 import { badges, courses } from "@/lib/data";
 import { RevisionCenter } from "@/components/revision/revision-center";
+import { getDashboardStats } from "@/lib/stats";
+
+function StatCards() {
+  const stats = getDashboardStats();
+  const streakText = `${stats.streak} ${stats.streak === 1 ? "day" : "days"}`;
+
+  return (
+    <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+      {[
+        ["Learning streak", streakText, Flame],
+        ["XP points", String(stats.xp), Zap],
+        ["Completed lessons", String(stats.completed), BadgeCheck],
+        ["Leaderboard", "#42", Trophy]
+      ].map(([label, value, Icon]) => (
+        <div key={label as string} className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+          <Icon className="mb-5 size-7 text-brand-600" />
+          <p className="text-3xl font-black">{value as string}</p>
+          <p className="mt-1 text-sm font-bold text-slate-500">{label as string}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function DashboardPage() {
   return (
     <Section eyebrow="Student dashboard" title="Your learning dashboard" copy="Track lessons, streaks, XP, saved notes, practice sheets, certificates and recently viewed classes in one place.">
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-        {[
-          ["Learning streak", "21 days", Flame],
-          ["XP points", "18,420", Zap],
-          ["Completed lessons", "284", BadgeCheck],
-          ["Leaderboard", "#42", Trophy]
-        ].map(([label, value, Icon]) => (
-          <div key={label as string} className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-            <Icon className="mb-5 size-7 text-brand-600" />
-            <p className="text-3xl font-black">{value as string}</p>
-            <p className="mt-1 text-sm font-bold text-slate-500">{label as string}</p>
-          </div>
-        ))}
-      </div>
+      <StatCards />
       <div className="mt-6 grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
         <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
           <h3 className="mb-4 text-xl font-black">Weekly activity</h3>

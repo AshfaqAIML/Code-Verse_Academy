@@ -1,9 +1,22 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Code2, Database, Play, Sparkles } from "lucide-react";
-import { stats } from "@/lib/data";
+import { ArrowRight, Code2, Database, Play, Sparkles, BadgeCheck, Flame, Trophy, Users } from "lucide-react";
+import { getHomeStats } from "@/lib/stats";
+import type { HomeStats } from "@/lib/stats";
+
+const iconMap: Record<string, typeof Users> = {
+  BadgeCheck, Flame, Code2, Trophy, Users,
+};
+
+const defaultStats: HomeStats[] = [
+  { label: "Active learners", value: "128K", iconName: "Users" },
+  { label: "Lessons completed", value: "3.4M", iconName: "BadgeCheck" },
+  { label: "Daily code runs", value: "92K", iconName: "Code2" },
+  { label: "Career wins", value: "18K", iconName: "Trophy" },
+];
 
 const codeLines = [
   "const path = createLearningPath('React');",
@@ -13,6 +26,12 @@ const codeLines = [
 ];
 
 export function AnimatedHero() {
+  const [heroStats, setHeroStats] = useState<HomeStats[]>(defaultStats);
+
+  useEffect(() => {
+    setHeroStats(getHomeStats());
+  }, []);
+
   return (
     <section className="relative overflow-hidden px-4 py-12 sm:px-6 lg:min-h-[calc(100svh-4rem)] lg:py-16">
       <div className="absolute inset-0 grid-bg" />
@@ -50,8 +69,8 @@ export function AnimatedHero() {
             </Link>
           </div>
           <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {stats.map((stat) => {
-              const Icon = stat.icon;
+            {heroStats.map((stat) => {
+              const Icon = iconMap[stat.iconName] || Trophy;
               return (
                 <div key={stat.label} className="border-l border-slate-300/80 pl-4 dark:border-slate-700">
                   <Icon className="mb-2 size-5 text-brand-600" />
