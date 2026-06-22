@@ -1,32 +1,5 @@
 [
   {
-    "slug": "html-foundations",
-    "title": "HTML",
-    "category": "Web",
-    "level": "Beginner",
-    "description": "Learn HTML structure, semantic layout, forms, accessibility and document foundations from the full course book.",
-    "source": "Complete HTML and Web Development Foundations Handbook1.docx",
-    "chapters": 37
-  },
-  {
-    "slug": "css-design-systems",
-    "title": "CSS",
-    "category": "Web",
-    "level": "Beginner",
-    "description": "Study CSS layout, responsive design, Flexbox, Grid, motion and modern styling systems from the book.",
-    "source": "Complete CSS and Modern Web Styling Handbook1.docx",
-    "chapters": 51
-  },
-  {
-    "slug": "javascript-mastery",
-    "title": "JavaScript",
-    "category": "Programming",
-    "level": "Intermediate",
-    "description": "Learn JavaScript fundamentals, DOM work, functions, async code and practical browser programming.",
-    "source": "COMPLETE JAVASCRIPT FOR ABSOLUTE BEGINNERS1.docx",
-    "chapters": 54
-  },
-  {
     "slug": "advanced-backend-and-system-design",
     "title": "Advanced Backend and System Design",
     "category": "Backend",
@@ -34,6 +7,32 @@
     "description": "Study advanced backend architecture, scaling, reliability, distributed systems and system design.",
     "source": "BOOK 3 Advanced Backend & System Design.docx",
     "chapters": 16
+  },
+  {
+    "slug": "ai-ml-handbook-volume-1",
+    "title": "AI/ML Handbook Volume 1",
+    "category": "AI/ML",
+    "level": "Foundations",
+    "description": "Python, mathematics, machine learning and deep learning foundations for AI/ML interview prep.",
+    "source": "AI_ML_Book1_Final.docx",
+    "chapters": 73,
+    "parts": 11,
+    "lessons": 2236,
+    "estimatedMinutes": 430,
+    "coverTheme": "aurora"
+  },
+  {
+    "slug": "ai-ml-handbook-volume-2",
+    "title": "AI/ML Handbook Volume 2",
+    "category": "AI/ML",
+    "level": "Interview Prep",
+    "description": "Generative AI, MLOps, SQL, project discussion and interview question bank for AI/ML roles.",
+    "source": "AI_ML_Book2_Final.docx",
+    "chapters": 52,
+    "parts": 6,
+    "lessons": 3888,
+    "estimatedMinutes": 395,
+    "coverTheme": "midnight"
   },
   {
     "slug": "backend-developer-interview-mastery",
@@ -63,6 +62,15 @@
     "chapters": 80
   },
   {
+    "slug": "css-design-systems",
+    "title": "CSS",
+    "category": "Web",
+    "level": "Beginner",
+    "description": "Study CSS layout, responsive design, Flexbox, Grid, motion and modern styling systems from the book.",
+    "source": "Complete CSS and Modern Web Styling Handbook1.docx",
+    "chapters": 51
+  },
+  {
     "slug": "english",
     "title": "English",
     "category": "Communication",
@@ -79,6 +87,24 @@
     "description": "Move from beginner to job-ready data analyst with Excel, SQL, dashboards, projects and interview prep.",
     "source": "Fresher to Job-Ready Data Analyst.docx",
     "chapters": 47
+  },
+  {
+    "slug": "html-foundations",
+    "title": "HTML",
+    "category": "Web",
+    "level": "Beginner",
+    "description": "Learn HTML structure, semantic layout, forms, accessibility and document foundations from the full course book.",
+    "source": "Complete HTML and Web Development Foundations Handbook1.docx",
+    "chapters": 37
+  },
+  {
+    "slug": "javascript-mastery",
+    "title": "JavaScript",
+    "category": "Programming",
+    "level": "Intermediate",
+    "description": "Learn JavaScript fundamentals, DOM work, functions, async code and practical browser programming.",
+    "source": "COMPLETE JAVASCRIPT FOR ABSOLUTE BEGINNERS1.docx",
+    "chapters": 54
   },
   {
     "slug": "javascript-web-development-master-book",

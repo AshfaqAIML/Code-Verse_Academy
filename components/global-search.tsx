@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowRight, Command, Search, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { courses, learningSheets, mockTests, projects, tutorialArticles, tutorialTracks } from "@/lib/data";
+import librarySearchIndex from "@/data/books/search-index.json";
 
 type ResultItem = {
   label: string;
@@ -69,6 +70,12 @@ export function GlobalSearch() {
         href: "/practice",
         group: "Practice",
         meta: `${test.questions} questions`
+      })),
+      ...librarySearchIndex.map((item) => ({
+        label: item.label,
+        href: item.href,
+        group: item.group,
+        meta: item.meta
       }))
     ];
 

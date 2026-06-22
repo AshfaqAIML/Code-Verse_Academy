@@ -9,21 +9,46 @@ export type LibraryBookSummary = {
   description: string;
   source: string;
   chapters: number;
+  parts?: number;
+  lessons?: number;
+  estimatedMinutes?: number;
+  coverTheme?: string;
 };
 
 export type LibraryBookBlock = {
-  type: "heading" | "subheading" | "paragraph" | "list" | "callout";
+  type: "heading" | "subheading" | "paragraph" | "list" | "callout" | "table";
   text: string;
 };
 
-export type LibraryBookChapter = {
+export type LibraryBookLesson = {
   number: number;
   slug: string;
   title: string;
   blocks: LibraryBookBlock[];
+  readingTime?: number;
+};
+
+export type LibraryBookChapter = {
+  number: number;
+  code?: string;
+  slug: string;
+  title: string;
+  blocks: LibraryBookBlock[];
+  partNumber?: number;
+  partTitle?: string;
+  lessons?: LibraryBookLesson[];
+  readingTime?: number;
+};
+
+export type LibraryBookPart = {
+  number: number;
+  slug: string;
+  title: string;
+  chapters: string[];
 };
 
 export type LibraryBook = Omit<LibraryBookSummary, "chapters"> & {
+  parts?: LibraryBookPart[];
   chapters: LibraryBookChapter[];
 };
 
@@ -31,7 +56,21 @@ const booksDir = path.join(process.cwd(), "data", "books");
 const preferredBookOrder = new Map([
   ["html-foundations", 0],
   ["css-design-systems", 1],
-  ["javascript-mastery", 2]
+  ["javascript-mastery", 2],
+  ["advanced-backend-and-system-design", 3],
+  ["backend-development-and-databases", 4],
+  ["backend-developer-interview-mastery", 5],
+  ["backend-engineering-to-ai-systems", 6],
+  ["python-backend-foundation", 7],
+  ["python-backend-development", 8],
+  ["python-engineering", 9],
+  ["python-dsa", 10],
+  ["fresher-to-job-ready-data-analyst", 11],
+  ["english", 12],
+  ["master-english-easily", 13],
+  ["javascript-web-development-master-book", 14],
+  ["ai-ml-handbook-volume-1", 15],
+  ["ai-ml-handbook-volume-2", 16]
 ]);
 
 function sortBooksByLearningOrder<T extends { slug: string; title: string }>(books: T[]) {
@@ -75,5 +114,28 @@ export function getLibraryChapter(bookSlug: string, chapterSlug: string) {
     chapter,
     previous: index > 0 ? book.chapters[index - 1] : null,
     next: index < book.chapters.length - 1 ? book.chapters[index + 1] : null
+  };
+}
+
+export function getLibraryLesson(bookSlug: string, chapterSlug: string, lessonSlug: string) {
+  const chapterData = getLibraryChapter(bookSlug, chapterSlug);
+  if (!chapterData) {
+    return null;
+  }
+
+  const { book, chapter } = chapterData;
+  const lessons = chapter.lessons ?? [];
+  const lessonIndex = lessons.findIndex((item) => item.slug === lessonSlug);
+  if (lessonIndex < 0) {
+    return null;
+  }
+
+  return {
+    book,
+    chapter,
+    lesson: lessons[lessonIndex],
+    previousLesson: lessonIndex > 0 ? lessons[lessonIndex - 1] : null,
+    nextLesson: lessonIndex < lessons.length - 1 ? lessons[lessonIndex + 1] : null,
+    totalLessons: lessons.length
   };
 }
