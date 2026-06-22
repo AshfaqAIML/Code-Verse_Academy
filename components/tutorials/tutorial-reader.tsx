@@ -338,6 +338,14 @@ function Outline({ headings, searchTerm }: { headings: Heading[]; searchTerm: st
 }
 
 function TutorialBlock({ block, id }: { block: LibraryBookBlock; id: string }) {
+  if (block.type === "code" || looksLikeCode(block.text) || block.text.includes("\n")) {
+    return (
+      <pre className="my-5 overflow-x-auto rounded-2xl bg-slate-950 p-5 font-mono text-sm leading-7 text-cyan-100">
+        <code>{restoreCodeFormatting(block.text)}</code>
+      </pre>
+    );
+  }
+
   if (block.type === "heading") {
     return (
       <h2 id={id} className="scroll-mt-24 border-t border-slate-200 pt-10 text-3xl font-black tracking-tight text-ink first:border-0 first:pt-0 dark:border-slate-800 dark:text-white">
@@ -365,25 +373,33 @@ function TutorialBlock({ block, id }: { block: LibraryBookBlock; id: string }) {
 
   if (block.type === "callout") {
     return (
-      <p className="my-5 rounded-2xl border-l-4 border-brand-500 bg-cyan-50 p-5 font-semibold leading-7 text-cyan-950 dark:bg-cyan-950/30 dark:text-cyan-100">
+      <p className="my-5 whitespace-pre-wrap rounded-2xl border-l-4 border-brand-500 bg-cyan-50 p-5 font-semibold leading-7 text-cyan-950 dark:bg-cyan-950/30 dark:text-cyan-100">
         {block.text}
       </p>
     );
   }
 
-  if (looksLikeCode(block.text)) {
-    return (
-      <pre className="my-5 overflow-x-auto rounded-2xl bg-slate-950 p-5 text-sm leading-7 text-cyan-100">
-        <code>{block.text}</code>
-      </pre>
-    );
-  }
-
-  return <p className="my-4 text-[18px] leading-9 text-slate-700 dark:text-slate-300">{block.text}</p>;
+  return <p className="my-4 whitespace-pre-wrap text-[18px] leading-9 text-slate-700 dark:text-slate-300">{block.text}</p>;
 }
 
 function looksLikeCode(text: string) {
-  return /^(from |import |def |class |const |let |var |function |SELECT |CREATE |INSERT |UPDATE |DELETE |docker |uvicorn |pip )/.test(text);
+  return (
+    /^(from |import |def |class |const |let |var |function |SELECT |CREATE |INSERT |UPDATE |DELETE |docker |uvicorn |pip )/.test(text) ||
+    /(?:Input:|Output:|→)/.test(text) ||
+    /[A-Za-z_][\w]*\s*=/.test(text) ||
+    /\bprint\(/.test(text)
+  );
+}
+
+function restoreCodeFormatting(text: string) {
+  let formatted = text.trim().replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  formatted = formatted.replace(/(?<=\S)(?=(?:Input:|Output:|Example Output))/g, "\n");
+  formatted = formatted.replace(/(?<=\S)(?=(?:from |import |def |class |const |let |var |function |print\(|SELECT |CREATE |INSERT |UPDATE |DELETE ))/g, "\n");
+  formatted = formatted.replace(/(#[ \t]*(?:Integer|Float|String|Boolean))([a-z_][\w]*\s*=)/g, "$1\n$2");
+  formatted = formatted.replace(/(?<=[0-9"'`\]\)])(?=\s*[A-Za-z_][\w]*\s*=)/g, "\n");
+  formatted = formatted.replace(/(?<=[A-Za-z0-9"'`\]\)])(?=print\()/g, "\n");
+  formatted = formatted.replace(/(?<=[0-9])(?=Output:)/g, "\n");
+  return formatted.replace(/\n{3,}/g, "\n\n");
 }
 
 function stripNumbering(text: string) {

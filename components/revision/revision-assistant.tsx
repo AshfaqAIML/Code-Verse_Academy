@@ -31,22 +31,29 @@ export function RevisionAssistant({ topic, chapterTitle, learningPath, content, 
   const [open, setOpen] = useState(false);
   const [saved, setSaved] = useState(false);
   const [exitPrompt, setExitPrompt] = useState(false);
+  const [exitPromptDismissed, setExitPromptDismissed] = useState(false);
   const [error, setError] = useState("");
   const [streakDay, setStreakDay] = useState("1");
   const [selectedChapters, setSelectedChapters] = useState<string[]>(() => previousChapters.slice(-3).map((chapter) => chapter.slug));
   const [warmupDismissed, setWarmupDismissed] = useState(false);
 
   const memory = useMemo(() => readMemory(), []);
+  const exitPromptKey = useMemo(() => `codeverse-revision-exit-dismissed:${topic}:${chapterTitle}`, [topic, chapterTitle]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setExitPromptDismissed(window.localStorage.getItem(exitPromptKey) === "1");
+  }, [exitPromptKey]);
 
   useEffect(() => {
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (!summary && content.length > 200) {
+      if (!summary && content.length > 200 && !exitPromptDismissed) {
         event.preventDefault();
         event.returnValue = "Generate revision notes before leaving?";
       }
     };
     const onMouseLeave = (event: MouseEvent) => {
-      if (event.clientY <= 0 && !summary) {
+      if (event.clientY <= 0 && !summary && !exitPromptDismissed) {
         setExitPrompt(true);
       }
     };
@@ -56,7 +63,7 @@ export function RevisionAssistant({ topic, chapterTitle, learningPath, content, 
       window.removeEventListener("beforeunload", onBeforeUnload);
       document.removeEventListener("mouseleave", onMouseLeave);
     };
-  }, [summary, content.length]);
+  }, [summary, content.length, exitPromptDismissed]);
 
   async function generate(nextMode = mode, override?: { title?: string; body?: string; completedTopics?: string[] }) {
     setOpen(true);
@@ -110,8 +117,11 @@ export function RevisionAssistant({ topic, chapterTitle, learningPath, content, 
 
   function proceedWithoutSummary() {
     setWarmupDismissed(true);
+    setExitPrompt(false);
+    setExitPromptDismissed(true);
     if (typeof window === "undefined") return;
     const memory = readMemory();
+    window.localStorage.setItem(exitPromptKey, "1");
     window.localStorage.setItem(
       "codeverse-learning-memory",
       JSON.stringify({ ...memory, skippedWarmupFor: chapterTitle, lastStudiedAt: new Date().toISOString() })
@@ -227,7 +237,18 @@ export function RevisionAssistant({ topic, chapterTitle, learningPath, content, 
                 <p className="text-xs font-black uppercase tracking-[0.24em] text-brand-600">Agentic revision</p>
                 <h2 className="text-2xl font-black">{exitPrompt ? "Generate revision notes before leaving?" : chapterTitle}</h2>
               </div>
-              <button onClick={() => { setOpen(false); setExitPrompt(false); }} className="rounded-xl border border-slate-200 p-2 dark:border-slate-800" aria-label="Close revision assistant">
+              <button
+                onClick={() => {
+                  setOpen(false);
+                  setExitPrompt(false);
+                  setExitPromptDismissed(true);
+                  if (typeof window !== "undefined") {
+                    window.localStorage.setItem(exitPromptKey, "1");
+                  }
+                }}
+                className="rounded-xl border border-slate-200 p-2 dark:border-slate-800"
+                aria-label="Close revision assistant"
+              >
                 <X className="size-5" />
               </button>
             </div>

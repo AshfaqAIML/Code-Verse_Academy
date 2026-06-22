@@ -16,7 +16,7 @@ export type LibraryBookSummary = {
 };
 
 export type LibraryBookBlock = {
-  type: "heading" | "subheading" | "paragraph" | "list" | "callout" | "table";
+  type: "heading" | "subheading" | "paragraph" | "list" | "callout" | "table" | "code";
   text: string;
 };
 

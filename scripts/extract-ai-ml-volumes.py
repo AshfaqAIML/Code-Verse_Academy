@@ -59,7 +59,17 @@ def read_paragraphs(path: Path) -> list[dict[str, str]]:
 
     paragraphs: list[dict[str, str]] = []
     for paragraph in root.findall(".//w:body/w:p", NS):
-        text = normalize("".join(node.text or "" for node in paragraph.findall(".//w:t", NS)))
+        parts: list[str] = []
+        for node in paragraph.iter():
+            tag = node.tag.rsplit("}", 1)[-1]
+            if tag == "t":
+                parts.append(node.text or "")
+            elif tag == "tab":
+                parts.append("\t")
+            elif tag in {"br", "cr"}:
+                parts.append("\n")
+
+        text = "".join(parts).replace("\r\n", "\n").replace("\r", "\n").strip()
         if not text:
             continue
         style_node = paragraph.find("./w:pPr/w:pStyle", NS)
@@ -102,18 +112,41 @@ def looks_like_front_matter(text: str) -> bool:
     )
 
 
+def is_code_like(text: str) -> bool:
+    lines = [line.rstrip() for line in text.splitlines() if line.strip()]
+    if not lines:
+        return False
+
+    if len(lines) > 1:
+        return any(
+            re.search(r"(?:^|\s)(?:from |import |def |class |const |let |var |function |return |print\(|SELECT |CREATE |INSERT |UPDATE |DELETE |Input:|Output:|x\s*=|age\s*=|price\s*=|name\s*=)", line)
+            or line.startswith(("    ", "\t"))
+            for line in lines
+        )
+
+    line = lines[0]
+    return bool(
+        re.search(
+            r"^(?:from |import |def |class |const |let |var |function |return |print\(|SELECT |CREATE |INSERT |UPDATE |DELETE |Input:|Output:)",
+            line,
+        )
+        or ("=" in line and len(line) <= 120)
+        or ("(" in line and ")" in line and len(line) <= 120)
+    )
+
+
 def block_type(style: str, text: str) -> str:
     lowered = text.lower()
     if style == "ListParagraph":
         return "list"
     if "table" in lowered and "|" in text:
         return "table"
+    if "\n" in text and is_code_like(text):
+        return "code"
+    if is_code_like(text):
+        return "code"
     if style.startswith("Heading1") or style.startswith("Heading2") or style.startswith("Heading3"):
-        if "quick revision sheet" in lowered or "cheat sheet" in lowered or "roadmap" in lowered:
-            return "heading"
         return "subheading" if style.startswith("Heading3") else "heading"
-    if re.fullmatch(r"\d+(\.\d+)*\. .+", text) or (len(text) <= 90 and not text.endswith(".")):
-        return "subheading"
     if text.startswith(("Example:", "Correct Answer:", "Note:", "Tip:", "Coding Exercise", "Warning:", "Important:")):
         return "callout"
     return "paragraph"
