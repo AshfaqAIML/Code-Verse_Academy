@@ -12,8 +12,20 @@ const adminPrivileges = [
   {
     title: "Publish and edit course content",
     description: "Update course cards, lesson outlines, chapter content, and book-backed tutorials.",
-    href: "/courses",
+    href: "/admin/tutorials",
     label: "Course editor"
+  },
+  {
+    title: "Manage blog articles",
+    description: "Create, edit and publish blog posts with full content block editor.",
+    href: "/admin/blogs",
+    label: "Blog editor"
+  },
+  {
+    title: "Manage books",
+    description: "Import and manage full-length book content from JSON sources.",
+    href: "/admin/books",
+    label: "Books"
   },
   {
     title: "Manage users and access",
