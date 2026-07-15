@@ -70,7 +70,8 @@ const preferredBookOrder = new Map([
   ["master-english-easily", 13],
   ["javascript-web-development-master-book", 14],
   ["ai-ml-handbook-volume-1", 15],
-  ["ai-ml-handbook-volume-2", 16]
+  ["ai-ml-handbook-volume-2", 16],
+  ["aiml-engineer", 17]
 ]);
 
 function sortBooksByLearningOrder<T extends { slug: string; title: string }>(books: T[]) {

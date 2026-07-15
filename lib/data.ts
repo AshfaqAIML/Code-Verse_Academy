@@ -202,6 +202,18 @@ export const courses = [
     description: "Neural networks, backpropagation, CNNs, transformers and animated experiments.",
     chapters: ["Neurons", "Training", "CNNs", "Transformers"],
     certificate: true
+  },
+  {
+    title: "AIML Engineer",
+    slug: "aiml-engineer",
+    category: "AI/ML",
+    level: "Beginner to Professional",
+    lessons: 105,
+    progress: 0,
+    color: "from-violet-600 to-fuchsia-500",
+    description: "Complete Beginner-to-Professional AI Engineer Roadmap covering Python, Math, SQL, ML, Deep Learning, NLP, LLMs, MLOps.",
+    chapters: ["Python", "Math & SQL", "Machine Learning", "Deep Learning", "NLP & LLMs", "MLOps & System Design"],
+    certificate: true
   }
 ];
 

@@ -1,5 +1,14 @@
 [
   {
+    "slug": "aiml-engineer",
+    "title": "AI/ML Engineering Mastery Handbook",
+    "category": "AI/ML",
+    "level": "Beginner to Professional",
+    "description": "Complete Beginner-to-Professional AI Engineer Roadmap covering Python, Mathematics, SQL, Data Analysis, Machine Learning, Deep Learning, Computer Vision, NLP, LLMs, MLOps, and AI System Design.",
+    "source": "AiMlEng1-5.docx",
+    "chapters": 105
+  },
+  {
     "slug": "advanced-backend-and-system-design",
     "title": "Advanced Backend and System Design",
     "category": "Backend",
