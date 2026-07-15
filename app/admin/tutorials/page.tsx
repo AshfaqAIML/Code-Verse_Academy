@@ -67,7 +67,10 @@ export default function AdminTutorialsPage() {
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ type: "tutorials" }),
       });
-      if (!res.ok) throw new Error("Migration failed");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(err.error || `Migration failed (${res.status})`);
+      }
       alert("Migration complete! Refreshing list...");
       fetchTutorials();
     } catch (e) {

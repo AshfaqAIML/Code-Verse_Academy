@@ -10,10 +10,17 @@ import fs from "node:fs";
 import path from "node:path";
 
 export async function POST(request: NextRequest) {
+  try {
   const authError = requireAdmin(request);
   if (authError) return authError;
 
-  await connectDB();
+  if (!process.env.MONGODB_URI) {
+    return NextResponse.json({ error: "MONGODB_URI is not set in environment variables. Add it in Vercel project settings → Environment Variables." }, { status: 500 });
+  }
+
+  try { await connectDB(); } catch (e) {
+    return NextResponse.json({ error: `MongoDB connection failed: ${String(e)}. Make sure MONGODB_URI is correct.` }, { status: 500 });
+  }
 
   const results = { tutorials: 0, blogs: 0, books: 0 };
 
@@ -84,4 +91,7 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({ success: true, migrated: results });
+  } catch (e) {
+    return NextResponse.json({ error: `Migration error: ${String(e)}` }, { status: 500 });
+  }
 }
