@@ -24,11 +24,16 @@ export async function POST(request: Request) {
     const email = payload.email.toLowerCase().trim();
     const name = payload.name || email.split("@")[0];
 
-    const token = createAuthToken({ email, name, role: "student" });
+    const adminEmail = process.env.CODEVERSE_DEMO_ADMIN_EMAIL?.trim().toLowerCase() ?? "";
+    const isAdmin = adminEmail ? email === adminEmail : false;
+
+    const role = isAdmin ? "admin" : "student";
+
+    const token = createAuthToken({ email, name, role });
 
     const response = NextResponse.json({
       token,
-      user: { name, email, role: "student" },
+      user: { name, email, role },
     });
 
     response.cookies.set({
