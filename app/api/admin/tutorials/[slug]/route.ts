@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/lib/db";
-import { Tutorial } from "@/lib/models/Tutorial";
 import { requireAdmin } from "@/lib/admin-auth";
+import { readCollection, upsertOne, deleteOne, findOne } from "@/lib/file-store";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const authError = requireAdmin(request);
   if (authError) return authError;
 
   const { slug } = await params;
-  await connectDB();
-  const tutorial = await Tutorial.findOne({ slug }).lean();
+  const tutorials = readCollection("tutorials");
+  const tutorial = tutorials.find((t) => (t as { slug: string }).slug === slug) ?? null;
   if (!tutorial) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -23,17 +22,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const { slug } = await params;
     const body = await request.json();
-    await connectDB();
-
-    const tutorial = await Tutorial.findOneAndUpdate(
-      { slug },
-      { $set: body },
-      { new: true, runValidators: true }
-    ).lean();
-
-    if (!tutorial) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
+    const tutorial = upsertOne("tutorials", { ...body, slug });
     return NextResponse.json({ tutorial });
   } catch (error) {
     return NextResponse.json({ error: String(error) }, { status: 400 });
@@ -45,9 +34,8 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   if (authError) return authError;
 
   const { slug } = await params;
-  await connectDB();
-  const tutorial = await Tutorial.findOneAndDelete({ slug }).lean();
-  if (!tutorial) {
+  const deleted = deleteOne("tutorials", slug);
+  if (!deleted) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
   return NextResponse.json({ success: true });

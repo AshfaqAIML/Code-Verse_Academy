@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/lib/db";
-import { Blog } from "@/lib/models/Blog";
 import { requireAdmin } from "@/lib/admin-auth";
+import { readCollection, upsertOne, deleteOne } from "@/lib/file-store";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const authError = requireAdmin(request);
   if (authError) return authError;
 
   const { slug } = await params;
-  await connectDB();
-  const blog = await Blog.findOne({ slug }).lean();
+  const blogs = readCollection("blogs");
+  const blog = blogs.find((b) => (b as { slug: string }).slug === slug) ?? null;
   if (!blog) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -23,19 +22,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const { slug } = await params;
     const body = await request.json();
-    await connectDB();
-
     const wordCount = body.blocks?.reduce?.((acc: number, b: { text: string }) => acc + (b.text?.split(/\s+/).length ?? 0), 0) ?? 0;
-
-    const blog = await Blog.findOneAndUpdate(
-      { slug },
-      { $set: { ...body, wordCount, readingTime: Math.ceil(wordCount / 200) } },
-      { new: true, runValidators: true }
-    ).lean();
-
-    if (!blog) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
+    const blog = upsertOne("blogs", { ...body, slug, wordCount, readingTime: Math.ceil(wordCount / 200) });
     return NextResponse.json({ blog });
   } catch (error) {
     return NextResponse.json({ error: String(error) }, { status: 400 });
@@ -47,9 +35,8 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   if (authError) return authError;
 
   const { slug } = await params;
-  await connectDB();
-  const blog = await Blog.findOneAndDelete({ slug }).lean();
-  if (!blog) {
+  const deleted = deleteOne("blogs", slug);
+  if (!deleted) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
   return NextResponse.json({ success: true });

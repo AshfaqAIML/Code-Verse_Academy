@@ -131,10 +131,10 @@ export default async function AdminPage() {
       <div className="grid gap-5 md:grid-cols-4">
         {[
           ...adminMetrics,
-          { label: "Certificates issued", value: "1,284", change: "+14%" },
           { label: "Certificate downloads", value: "3,916", change: "+31%" },
           { label: "Verification scans", value: "842", change: "+19%" },
-          { label: "Active templates", value: String(certificateTemplates.length), change: "Live" }
+          { label: "Active templates", value: String(certificateTemplates.length), change: "Live" },
+          { label: "Avg. completion rate", value: "62%", change: "+9%" }
         ].slice(0, 8).map((metric) => (
           <div key={metric.label} className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
             <p className="text-sm font-bold text-slate-500">{metric.label}</p>

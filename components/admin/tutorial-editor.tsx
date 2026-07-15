@@ -130,10 +130,10 @@ export function TutorialEditor({ slug }: { slug?: string }) {
     const token = localStorage.getItem("codeverse-token");
     const payload = {
       ...data,
-      sections: data.sections.filter((s) => s.heading || s.body),
-      practice: data.practice.filter((s) => s.trim()),
-      quiz: data.quiz.filter((q) => q.question || q.answer),
-      outline: data.outline.map((o) => ({ ...o, chapters: o.chapters.filter((c) => c.trim()) })).filter((o) => o.part),
+      sections: (data.sections ?? []).filter((s) => s.heading || s.body),
+      practice: (data.practice ?? []).filter((s) => s.trim()),
+      quiz: (data.quiz ?? []).filter((q) => q.question || q.answer),
+      outline: (data.outline ?? []).map((o) => ({ ...o, chapters: (o.chapters ?? []).filter((c) => c.trim()) })).filter((o) => o.part),
     };
 
     try {
@@ -218,7 +218,7 @@ export function TutorialEditor({ slug }: { slug?: string }) {
             <textarea rows={3} value={data.description} onChange={(e) => update("description", e.target.value)} placeholder="Short course description" className="w-full" />
           </Field>
           <Field label="Chapters (comma-separated)">
-            <input type="text" value={data.chapters.join(", ")} onChange={(e) => update("chapters", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} placeholder="HTML, CSS, JavaScript" className="w-full" />
+            <input type="text" value={(data.chapters ?? []).join(", ")} onChange={(e) => update("chapters", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} placeholder="HTML, CSS, JavaScript" className="w-full" />
           </Field>
           <div className="flex items-center gap-3">
             <Field label="Gradient color">
@@ -243,7 +243,7 @@ export function TutorialEditor({ slug }: { slug?: string }) {
                 <Plus className="size-4" /> Add section
               </button>
             </div>
-            {data.sections.map((s, i) => (
+            {(data.sections ?? []).map((s, i) => (
               <div key={i} className="group relative rounded-xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/50">
                 <button onClick={() => removeSection(i)} className="absolute right-3 top-3 hidden rounded-lg p-1 text-red-500 hover:bg-red-50 group-hover:block dark:hover:bg-red-950">
                   <Trash2 className="size-4" />
@@ -265,7 +265,7 @@ export function TutorialEditor({ slug }: { slug?: string }) {
                 <Plus className="size-4" /> Add task
               </button>
             </div>
-            {data.practice.map((p, i) => (
+            {(data.practice ?? []).map((p, i) => (
               <div key={i} className="flex items-center gap-2">
                 <input type="text" value={p} onChange={(e) => updatePractice(i, e.target.value)} placeholder="e.g. Create a counter" className="flex-1 text-sm" />
                 <button onClick={() => removePractice(i)} className="rounded-lg p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950">
@@ -277,7 +277,7 @@ export function TutorialEditor({ slug }: { slug?: string }) {
         </FieldSet>
 
         <FieldSet title="Quiz">
-          {data.quiz.map((q, i) => (
+          {(data.quiz ?? []).map((q, i) => (
             <div key={i} className="group relative rounded-xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/50">
               <button onClick={() => removeQuiz(i)} className="absolute right-3 top-3 hidden rounded-lg p-1 text-red-500 hover:bg-red-50 group-hover:block dark:hover:bg-red-950">
                 <Trash2 className="size-4" />
@@ -292,7 +292,7 @@ export function TutorialEditor({ slug }: { slug?: string }) {
         </FieldSet>
 
         <FieldSet title="Outline (optional, for structured courses)">
-          {data.outline.map((part, pi) => (
+          {(data.outline ?? []).map((part, pi) => (
             <div key={pi} className="group relative rounded-xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/50">
               <button onClick={() => removeOutlinePart(pi)} className="absolute right-3 top-3 hidden rounded-lg p-1 text-red-500 hover:bg-red-50 group-hover:block dark:hover:bg-red-950">
                 <Trash2 className="size-4" />

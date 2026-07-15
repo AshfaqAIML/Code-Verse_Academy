@@ -6,13 +6,12 @@ import { Plus, Pencil, Trash2, ExternalLink, Database, AlertCircle } from "lucid
 import { Section } from "@/components/section";
 
 type BlogSummary = {
-  _id: string;
   slug: string;
   title: string;
   category: string;
   readingTime: number;
   published: boolean;
-  updatedAt: string;
+  updatedAt?: string;
 };
 
 export default function AdminBlogsPage() {
@@ -57,7 +56,7 @@ export default function AdminBlogsPage() {
   }
 
   async function handleMigrate() {
-    if (!confirm("Import existing blog articles from the codebase into MongoDB?")) return;
+    if (!confirm("Import existing blog articles from the codebase?")) return;
     setMigrating(true);
     try {
       const token = localStorage.getItem("codeverse-token");
@@ -126,7 +125,7 @@ export default function AdminBlogsPage() {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
               {blogs.map((b) => (
-                <tr key={b._id} className="transition hover:bg-slate-50 dark:hover:bg-slate-900/40">
+                <tr key={b.slug} className="transition hover:bg-slate-50 dark:hover:bg-slate-900/40">
                   <td className="px-5 py-4 font-semibold">{b.title}</td>
                   <td className="px-5 py-4">{b.category}</td>
                   <td className="px-5 py-4">{b.readingTime} min</td>

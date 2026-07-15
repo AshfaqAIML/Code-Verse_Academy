@@ -1,97 +1,47 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/lib/db";
-import { Tutorial } from "@/lib/models/Tutorial";
-import { Blog } from "@/lib/models/Blog";
-import { Book } from "@/lib/models/Book";
 import { requireAdmin } from "@/lib/admin-auth";
-import { tutorialContent } from "@/lib/data";
+import { writeCollection, readCollection } from "@/lib/file-store";
+import { tutorialContent, courses } from "@/lib/data";
 import blogData from "@/data/blogs.json";
-import fs from "node:fs";
-import path from "node:path";
+
+const courseMap = new Map(courses.map((c) => [c.slug, c]));
+
+function mergeCourseData(slug: string, content: Record<string, unknown>) {
+  const course = courseMap.get(slug);
+  return {
+    slug,
+    title: course?.title ?? slug.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" "),
+    category: course?.category ?? "Programming",
+    level: course?.level ?? "Beginner",
+    lessons: course?.lessons ?? 0,
+    description: course?.description ?? "",
+    chapters: course?.chapters ?? [],
+    color: course?.color ?? "from-blue-400 to-indigo-600",
+    certificate: course?.certificate ?? true,
+    ...content,
+  };
+}
 
 export async function POST(request: NextRequest) {
-  try {
   const authError = requireAdmin(request);
   if (authError) return authError;
 
-  if (!process.env.MONGODB_URI) {
-    return NextResponse.json({ error: "MONGODB_URI is not set in environment variables. Add it in Vercel project settings → Environment Variables." }, { status: 500 });
-  }
-
-  try { await connectDB(); } catch (e) {
-    return NextResponse.json({ error: `MongoDB connection failed: ${String(e)}. Make sure MONGODB_URI is correct.` }, { status: 500 });
-  }
-
-  const results = { tutorials: 0, blogs: 0, books: 0 };
-
   const { type } = await request.json().catch(() => ({ type: "all" }));
+  const results = { tutorials: 0, blogs: 0 };
 
   if (type === "all" || type === "tutorials") {
-    for (const [slug, content] of Object.entries(tutorialContent)) {
-      await Tutorial.findOneAndUpdate(
-        { slug },
-        {
-          $set: {
-            slug,
-            title: slug.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" "),
-            overview: content.overview,
-            sections: content.sections,
-            example: content.example,
-            practice: content.practice,
-            quiz: content.quiz,
-            outline: content.outline ?? [],
-          },
-        },
-        { upsert: true }
-      );
-      results.tutorials++;
-    }
+    const tutorials = Object.entries(tutorialContent).map(([slug, content]) =>
+      mergeCourseData(slug, content as Record<string, unknown>)
+    );
+    writeCollection("tutorials", tutorials);
+    results.tutorials = tutorials.length;
   }
 
   if (type === "all" || type === "blogs") {
-    for (const article of blogData.articles) {
-      await Blog.findOneAndUpdate(
-        { slug: article.slug },
-        {
-          $set: {
-            slug: article.slug,
-            title: article.title,
-            category: article.category,
-            excerpt: article.excerpt,
-            wordCount: article.wordCount,
-            readingTime: article.readingTime,
-            blocks: article.blocks,
-            published: true,
-          },
-        },
-        { upsert: true }
-      );
-      results.blogs++;
-    }
-  }
-
-  if (type === "all" || type === "books") {
-    const booksDir = path.join(process.cwd(), "data", "books");
-    const registryPath = path.join(booksDir, "registry.json");
-    if (fs.existsSync(registryPath)) {
-      const registry = JSON.parse(fs.readFileSync(registryPath, "utf8")) as { slug: string }[];
-      for (const entry of registry) {
-        const bookPath = path.join(booksDir, `${entry.slug}.json`);
-        if (fs.existsSync(bookPath)) {
-          const bookData = JSON.parse(fs.readFileSync(bookPath, "utf8"));
-          await Book.findOneAndUpdate(
-            { slug: bookData.slug },
-            { $set: bookData },
-            { upsert: true }
-          );
-          results.books++;
-        }
-      }
-    }
+    const blogs = blogData.articles.map((a) => ({ ...a, published: true }));
+    writeCollection("blogs", blogs);
+    results.blogs = blogs.length;
   }
 
   return NextResponse.json({ success: true, migrated: results });
-  } catch (e) {
-    return NextResponse.json({ error: `Migration error: ${String(e)}` }, { status: 500 });
-  }
 }

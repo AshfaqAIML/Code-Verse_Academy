@@ -1,0 +1,864 @@
+[
+  {
+    "slug": "dsa-complete-path",
+    "title": "DSA Complete Path",
+    "category": "DSA",
+    "level": "Beginner to Advanced",
+    "lessons": 92,
+    "description": "Learn problem solving from basics: arrays, strings, recursion, trees, graphs and dynamic programming.",
+    "chapters": [
+      "C++ basics",
+      "Recursion",
+      "Trees",
+      "Graphs"
+    ],
+    "color": "from-rose-400 to-orange-500",
+    "certificate": true,
+    "overview": "DSA helps you solve coding problems in a planned way. You learn how to store data, search faster, reduce repeated work and choose the right approach.",
+    "sections": [
+      {
+        "heading": "Arrays and strings",
+        "body": "Arrays store many values in order. Strings are text values that can be checked, reversed, counted or split into smaller parts."
+      },
+      {
+        "heading": "Recursion",
+        "body": "Recursion means a function calls itself to solve a smaller version of the same problem. Always define the stopping condition first."
+      },
+      {
+        "heading": "Trees and graphs",
+        "body": "Trees help represent hierarchy. Graphs help represent connections like roads, networks, friendships and dependencies."
+      },
+      {
+        "heading": "Dynamic programming",
+        "body": "Dynamic programming stores answers to smaller problems so the program does not calculate the same thing again and again."
+      }
+    ],
+    "example": "Example: To find the largest number in an array, keep one variable called largest and update it while scanning each item.",
+    "practice": [
+      "Find the smallest number in an array.",
+      "Reverse a string.",
+      "Solve one recursion problem like factorial.",
+      "Draw a tree traversal by hand."
+    ],
+    "quiz": [
+      {
+        "question": "Why do we use arrays?",
+        "answer": "To store multiple values in one ordered collection."
+      },
+      {
+        "question": "What must every recursion problem have?",
+        "answer": "A base case that stops the function."
+      }
+    ]
+  },
+  {
+    "slug": "system-design-basics",
+    "title": "System Design Basics",
+    "category": "Interview",
+    "level": "Intermediate",
+    "lessons": 28,
+    "description": "Understand clean design, common patterns, APIs, caching and how to explain your design in interviews.",
+    "chapters": [
+      "LLD",
+      "Patterns",
+      "APIs",
+      "Scaling"
+    ],
+    "color": "from-slate-500 to-cyan-500",
+    "certificate": true,
+    "overview": "System design teaches you how to plan an application before building it. You think about users, APIs, data, speed, security and scaling.",
+    "sections": [
+      {
+        "heading": "Understand the requirement",
+        "body": "First ask what the system should do. A chat app, food app and learning app all need different features and data."
+      },
+      {
+        "heading": "Design the API",
+        "body": "APIs are the doors through which frontend and backend talk. Keep names simple, like GET courses or POST login."
+      },
+      {
+        "heading": "Store the data",
+        "body": "Choose tables or collections based on the data. Users, courses, lessons, quizzes and progress usually need separate storage."
+      },
+      {
+        "heading": "Scale slowly",
+        "body": "Start with a simple design. Add caching, queues and load balancing only when the app really needs them."
+      }
+    ],
+    "example": "Example: A course platform needs user login, course list, lesson content, progress tracking and certificate generation.",
+    "practice": [
+      "Design a URL shortener.",
+      "List APIs for a notes app.",
+      "Draw the database tables for a quiz app."
+    ],
+    "quiz": [
+      {
+        "question": "What should you clarify first in system design?",
+        "answer": "The requirements and main users."
+      },
+      {
+        "question": "Why do we use caching?",
+        "answer": "To make frequently used data load faster."
+      }
+    ]
+  },
+  {
+    "slug": "cpp-programming-basics",
+    "title": "C++ Programming Basics",
+    "category": "Programming",
+    "level": "Beginner",
+    "lessons": 39,
+    "description": "Start coding with variables, loops, functions, pointers, OOP and simple practice problems.",
+    "chapters": [
+      "Syntax",
+      "Loops",
+      "Functions",
+      "OOP"
+    ],
+    "color": "from-blue-400 to-indigo-600",
+    "certificate": true,
+    "overview": "C++ is a fast programming language often used for DSA. Start with syntax, variables, conditions, loops and functions.",
+    "sections": [
+      {
+        "heading": "Variables",
+        "body": "Variables store values. Use int for whole numbers, double for decimals, char for one character and string for text."
+      },
+      {
+        "heading": "Conditions",
+        "body": "Use if, else if and else when your program needs to make decisions."
+      },
+      {
+        "heading": "Loops",
+        "body": "Loops repeat work. Use for loops when you know the count and while loops when the count depends on a condition."
+      },
+      {
+        "heading": "Functions",
+        "body": "Functions keep code organized. A function should do one clear job and return a useful result when needed."
+      }
+    ],
+    "example": "Example: int total = a + b; stores the sum of two numbers in total.",
+    "practice": [
+      "Print numbers from 1 to 10.",
+      "Check if a number is even.",
+      "Write a function that returns the larger of two numbers."
+    ],
+    "quiz": [
+      {
+        "question": "Which type stores whole numbers in C++?",
+        "answer": "int."
+      },
+      {
+        "question": "Why do we use functions?",
+        "answer": "To reuse code and keep programs organized."
+      }
+    ]
+  },
+  {
+    "slug": "java-programming-basics",
+    "title": "Java Programming Basics",
+    "category": "Programming",
+    "level": "Beginner",
+    "lessons": 32,
+    "description": "Learn Java in a simple way with classes, objects, collections and interview-friendly exercises.",
+    "chapters": [
+      "Core Java",
+      "OOP",
+      "Collections",
+      "Practice"
+    ],
+    "color": "from-red-400 to-amber-500",
+    "certificate": true,
+    "overview": "Java is used for apps, backend systems and interviews. Learn classes, objects, methods, arrays and collections step by step.",
+    "sections": [
+      {
+        "heading": "Class and object",
+        "body": "A class is a blueprint. An object is a real item made from that blueprint."
+      },
+      {
+        "heading": "Methods",
+        "body": "Methods are actions inside a class. They help keep logic grouped and reusable."
+      },
+      {
+        "heading": "Collections",
+        "body": "Collections like ArrayList and HashMap help store and manage groups of values."
+      },
+      {
+        "heading": "Exception handling",
+        "body": "Exceptions are errors that happen while the program runs. Use try and catch to handle them cleanly."
+      }
+    ],
+    "example": "Example: A Student class can have name, roll number and a method called printDetails.",
+    "practice": [
+      "Create a Student class.",
+      "Store five names in an ArrayList.",
+      "Use a HashMap to store subject marks."
+    ],
+    "quiz": [
+      {
+        "question": "What is an object?",
+        "answer": "A real instance created from a class."
+      },
+      {
+        "question": "What does ArrayList store?",
+        "answer": "A list of values that can grow or shrink."
+      }
+    ]
+  },
+  {
+    "slug": "html-foundations",
+    "title": "HTML",
+    "category": "Web",
+    "level": "Beginner",
+    "lessons": 37,
+    "description": "Complete HTML and Web Development Foundations Handbook1 covers internet basics, document anatomy, semantic HTML, forms, media, accessibility and SEO-friendly page structure.",
+    "chapters": [
+      "Internet basics",
+      "Document anatomy",
+      "Semantic HTML",
+      "Forms & accessibility"
+    ],
+    "color": "from-orange-400 to-coral",
+    "certificate": true,
+    "overview": "HTML gives structure to a webpage. It tells the browser what each part means: heading, paragraph, image, form, button or section.",
+    "sections": [
+      {
+        "heading": "Page structure",
+        "body": "A good page has clear headings, sections, navigation and meaningful content. This helps users and search engines."
+      },
+      {
+        "heading": "Text and media",
+        "body": "Use headings for titles, paragraphs for text, lists for grouped points, images for visuals and links for navigation."
+      },
+      {
+        "heading": "Forms",
+        "body": "Forms collect user input. Use labels so users know what each input field is for."
+      },
+      {
+        "heading": "Accessibility",
+        "body": "Write HTML that screen readers can understand. Use alt text for images and buttons with clear names."
+      }
+    ],
+    "example": "<section><h1>Course title</h1><p>Short lesson intro.</p></section>",
+    "practice": [
+      "Create a profile page.",
+      "Add a contact form with labels.",
+      "Use semantic tags like header, main and footer."
+    ],
+    "quiz": [
+      {
+        "question": "What is HTML used for?",
+        "answer": "To structure content on a webpage."
+      },
+      {
+        "question": "Why should inputs have labels?",
+        "answer": "So users understand what information to enter."
+      }
+    ]
+  },
+  {
+    "slug": "css-design-systems",
+    "title": "CSS",
+    "category": "Web",
+    "level": "Beginner",
+    "lessons": 44,
+    "description": "Responsive layout, Grid, Flexbox, tokens, animations and modern component styling.",
+    "chapters": [
+      "Selectors",
+      "Layout",
+      "Responsive UI",
+      "Motion"
+    ],
+    "color": "from-sky-400 to-brand-600",
+    "certificate": true,
+    "overview": "CSS controls how a website looks. It handles colors, spacing, layout, typography, responsiveness and animation.",
+    "sections": [
+      {
+        "heading": "Selectors",
+        "body": "Selectors choose which HTML elements to style. You can select by element, class, id or state."
+      },
+      {
+        "heading": "Box model",
+        "body": "Every element has content, padding, border and margin. Understanding this makes layout easier."
+      },
+      {
+        "heading": "Flexbox and grid",
+        "body": "Flexbox is great for one-direction layouts. Grid is great for rows and columns."
+      },
+      {
+        "heading": "Responsive design",
+        "body": "Responsive design makes the page look good on mobile, tablet and desktop screens."
+      }
+    ],
+    "example": ".card { padding: 16px; border-radius: 12px; display: grid; gap: 12px; }",
+    "practice": [
+      "Style a button.",
+      "Create a two-column layout.",
+      "Make a card stack on mobile."
+    ],
+    "quiz": [
+      {
+        "question": "What does CSS control?",
+        "answer": "The visual style and layout of a webpage."
+      },
+      {
+        "question": "When is CSS grid useful?",
+        "answer": "When you need rows and columns."
+      }
+    ]
+  },
+  {
+    "slug": "javascript-mastery",
+    "title": "JavaScript",
+    "category": "Programming",
+    "level": "Intermediate",
+    "lessons": 58,
+    "description": "DOM, async programming, APIs, testing, modules and interview-grade problem solving.",
+    "chapters": [
+      "Core JS",
+      "DOM",
+      "Async",
+      "Patterns"
+    ],
+    "color": "from-amber-300 to-yellow-500",
+    "certificate": true,
+    "overview": "JavaScript makes websites interactive. You can react to clicks, update content, call APIs and handle data.",
+    "sections": [
+      {
+        "heading": "Variables and types",
+        "body": "Use variables to store values like numbers, strings, booleans, arrays and objects."
+      },
+      {
+        "heading": "Functions",
+        "body": "Functions group code into reusable actions. Give them clear names based on what they do."
+      },
+      {
+        "heading": "DOM",
+        "body": "The DOM is the page structure that JavaScript can read and change."
+      },
+      {
+        "heading": "Async code",
+        "body": "Async code is used when work takes time, like calling an API or loading data."
+      }
+    ],
+    "example": "button.addEventListener('click', () => { console.log('Clicked'); });",
+    "practice": [
+      "Create a counter.",
+      "Show and hide a menu.",
+      "Fetch sample data from an API."
+    ],
+    "quiz": [
+      {
+        "question": "What does JavaScript add to a webpage?",
+        "answer": "Interactivity and logic."
+      },
+      {
+        "question": "What is the DOM?",
+        "answer": "The page structure that JavaScript can change."
+      }
+    ]
+  },
+  {
+    "slug": "react-product-engineering",
+    "title": "React Product Engineering",
+    "category": "Web",
+    "level": "Advanced",
+    "lessons": 52,
+    "description": "Hooks, server rendering, state, forms, performance and production app architecture.",
+    "chapters": [
+      "Components",
+      "Hooks",
+      "Routing",
+      "Optimization"
+    ],
+    "color": "from-cyan-300 to-blue-600",
+    "certificate": true,
+    "overview": "React helps you build user interfaces with reusable components. Each component owns a small part of the screen.",
+    "sections": [
+      {
+        "heading": "Components",
+        "body": "Components are reusable UI blocks. A button, navbar, course card or dashboard widget can be a component."
+      },
+      {
+        "heading": "Props",
+        "body": "Props pass data into a component. They make one component reusable with different content."
+      },
+      {
+        "heading": "State",
+        "body": "State stores values that can change, like form input, theme mode or selected tab."
+      },
+      {
+        "heading": "Effects",
+        "body": "Effects run code after rendering, such as reading local storage or loading data."
+      }
+    ],
+    "example": "function CourseCard({ title }) { return <h3>{title}</h3>; }",
+    "practice": [
+      "Build a course card component.",
+      "Create a theme toggle.",
+      "Make a tabs component for lessons."
+    ],
+    "quiz": [
+      {
+        "question": "What is a React component?",
+        "answer": "A reusable piece of UI."
+      },
+      {
+        "question": "What is state used for?",
+        "answer": "Data that changes while the app is running."
+      }
+    ]
+  },
+  {
+    "slug": "node-api-studio",
+    "title": "Node.js API Studio",
+    "category": "Backend",
+    "level": "Intermediate",
+    "lessons": 39,
+    "description": "Express APIs, JWT auth, validation, databases, logging and deployment workflows.",
+    "chapters": [
+      "Express",
+      "Auth",
+      "MongoDB",
+      "Deployment"
+    ],
+    "color": "from-emerald-300 to-leaf",
+    "certificate": true,
+    "overview": "Node.js lets you run JavaScript on the server. With Express, you can create APIs for login, courses, quizzes and dashboards.",
+    "sections": [
+      {
+        "heading": "Routes",
+        "body": "Routes define what happens when a user or frontend visits an API URL."
+      },
+      {
+        "heading": "Middleware",
+        "body": "Middleware runs before the final route. It can check auth, parse JSON or log requests."
+      },
+      {
+        "heading": "Authentication",
+        "body": "JWT auth sends a token after login. The token proves the user is signed in."
+      },
+      {
+        "heading": "Database connection",
+        "body": "The API can read and write data from MongoDB or PostgreSQL depending on your project."
+      }
+    ],
+    "example": "app.get('/api/courses', (req, res) => res.json({ data: courses }));",
+    "practice": [
+      "Create a health route.",
+      "Create a courses route.",
+      "Add simple login validation."
+    ],
+    "quiz": [
+      {
+        "question": "What is Express used for?",
+        "answer": "Creating server routes and APIs."
+      },
+      {
+        "question": "What does a JWT token prove?",
+        "answer": "That a user has logged in."
+      }
+    ]
+  },
+  {
+    "slug": "python-backend-development",
+    "title": "Python Backend Development",
+    "category": "Programming",
+    "level": "Beginner",
+    "lessons": 0,
+    "description": "",
+    "chapters": [],
+    "color": "from-blue-400 to-indigo-600",
+    "certificate": true,
+    "overview": "This course is based on your book Python Backend Development. It teaches backend engineering step by step, from Python basics to production APIs, databases, security, deployment, microservices and a real backend project.",
+    "sections": [
+      {
+        "heading": "Python foundations",
+        "body": "Start with Python setup, variables, functions, data structures, object-oriented programming, error handling, logging, file handling and clean coding habits for backend work."
+      },
+      {
+        "heading": "Web and API fundamentals",
+        "body": "Learn how the internet works, how HTTP requests and responses move between client and server, and why APIs are the main connection between frontend apps and backend systems."
+      },
+      {
+        "heading": "FastAPI development",
+        "body": "Build Python APIs with FastAPI. Create routes, handle request data, validate input with Pydantic, return JSON responses and structure backend code clearly."
+      },
+      {
+        "heading": "Databases and data management",
+        "body": "Understand relational databases, PostgreSQL, SQL queries, schema design and ORM usage so your backend can store and read data safely."
+      },
+      {
+        "heading": "Security and authentication",
+        "body": "Learn login systems, authorization, password protection, tokens, secure API access and common backend security practices."
+      },
+      {
+        "heading": "Performance and reliability",
+        "body": "Study caching, background tasks, queues, async programming, testing, debugging, API documentation and performance optimization."
+      },
+      {
+        "heading": "Deployment and architecture",
+        "body": "Package apps with Docker, understand DevOps basics, deploy backend applications, design production-ready APIs, explore microservices and complete a real project."
+      }
+    ],
+    "outline": [
+      {
+        "part": "Part I - Python Foundations",
+        "chapters": [
+          "Chapter 1 - Introduction to Backend Development",
+          "Chapter 2 - Python Environment Setup for Backend Development",
+          "Chapter 3 - Python Fundamentals for Backend Development",
+          "Chapter 4 - Advanced Python Essentials",
+          "Chapter 5 - Object-Oriented Programming in Python",
+          "Chapter 6 - Error Handling and Logging",
+          "Chapter 7 - File Handling and Data Processing"
+        ]
+      },
+      {
+        "part": "Part II - Web Fundamentals",
+        "chapters": [
+          "Chapter 8 - Understanding the Internet and HTTP",
+          "Chapter 9 - Introduction to Web Servers",
+          "Chapter 10 - Introduction to APIs"
+        ]
+      },
+      {
+        "part": "Part III - Backend Framework Development",
+        "chapters": [
+          "Chapter 11 - FastAPI Framework Fundamentals",
+          "Chapter 12 - Advanced FastAPI Development",
+          "Chapter 13 - Data Validation with Pydantic"
+        ]
+      },
+      {
+        "part": "Part IV - Databases and Data Management",
+        "chapters": [
+          "Chapter 14 - Database Fundamentals",
+          "Chapter 15 - Working with PostgreSQL and SQL",
+          "Chapter 16 - Object Relational Mapping (ORM)"
+        ]
+      },
+      {
+        "part": "Part V - Security and Authentication",
+        "chapters": [
+          "Chapter 17 - Authentication and Authorization",
+          "Chapter 18 - Security in Backend Applications"
+        ]
+      },
+      {
+        "part": "Part VI - Performance and Scalability",
+        "chapters": [
+          "Chapter 19 - Caching for Performance",
+          "Chapter 20 - Background Tasks and Queues",
+          "Chapter 21 - Asynchronous Programming in Python"
+        ]
+      },
+      {
+        "part": "Part VII - Testing and System Reliability",
+        "chapters": [
+          "Chapter 22 - Testing Backend Applications",
+          "Chapter 23 - Debugging and Performance Optimization",
+          "Chapter 24 - API Documentation"
+        ]
+      },
+      {
+        "part": "Part VIII - Deployment and DevOps",
+        "chapters": [
+          "Chapter 25 - Containerization with Docker",
+          "Chapter 26 - Deployment and DevOps Basics",
+          "Chapter 27 - Deploying Backend Applications"
+        ]
+      },
+      {
+        "part": "Part IX - Advanced Backend Architecture",
+        "chapters": [
+          "Chapter 28 - Building Production-Ready APIs",
+          "Chapter 29 - Microservices Architecture",
+          "Chapter 30 - Real-World Backend Project"
+        ]
+      }
+    ],
+    "example": "Example: A FastAPI backend receives a request, validates the input, runs business logic, talks to PostgreSQL, and returns a clean JSON response to the frontend.",
+    "practice": [
+      "Create a FastAPI route called /health that returns { status: 'ok' }.",
+      "Design tables for users, courses, lessons and progress.",
+      "Explain the request-response cycle in your own words.",
+      "Write three security rules for a login API.",
+      "Plan a Docker deployment checklist for a backend app."
+    ],
+    "quiz": [
+      {
+        "question": "What is the main job of a backend?",
+        "answer": "It handles data, business logic, security and communication between the app and database."
+      },
+      {
+        "question": "Why is FastAPI useful for Python backend development?",
+        "answer": "It helps build APIs quickly with routing, validation, automatic docs and async support."
+      },
+      {
+        "question": "Why do backend apps use databases?",
+        "answer": "To store important data like users, courses, orders, progress and settings."
+      },
+      {
+        "question": "What does Docker help with?",
+        "answer": "It packages the app and dependencies so the backend runs consistently in different environments."
+      }
+    ]
+  },
+  {
+    "slug": "python-data-analysis",
+    "title": "Python for Data Analysis",
+    "category": "Data",
+    "level": "Beginner",
+    "lessons": 47,
+    "description": "Python, NumPy, Pandas, notebooks, data cleaning and dashboard-ready analysis.",
+    "chapters": [
+      "Python",
+      "NumPy",
+      "Pandas",
+      "Visualization"
+    ],
+    "color": "from-indigo-400 to-fuchsia-500",
+    "certificate": true,
+    "overview": "Python is useful for data analysis because it is simple to read and has strong libraries like Pandas, NumPy and Matplotlib.",
+    "sections": [
+      {
+        "heading": "Load data",
+        "body": "Start by loading data from CSV, Excel or a database. Always inspect the first few rows."
+      },
+      {
+        "heading": "Clean data",
+        "body": "Fix missing values, remove duplicates and convert columns into the right type."
+      },
+      {
+        "heading": "Analyze data",
+        "body": "Group, filter and summarize data to answer useful questions."
+      },
+      {
+        "heading": "Visualize data",
+        "body": "Charts make patterns easier to see. Use bar charts, line charts and scatter plots."
+      }
+    ],
+    "example": "df.groupby('course')['revenue'].sum() shows total revenue for each course.",
+    "practice": [
+      "Load a CSV file.",
+      "Find missing values.",
+      "Create a bar chart for top categories."
+    ],
+    "quiz": [
+      {
+        "question": "Why do analysts clean data?",
+        "answer": "To make results accurate and reliable."
+      },
+      {
+        "question": "What does Pandas help with?",
+        "answer": "Working with tables of data."
+      }
+    ]
+  },
+  {
+    "slug": "sql-practice-lab",
+    "title": "SQL Practice Lab",
+    "category": "Data",
+    "level": "Intermediate",
+    "lessons": 31,
+    "description": "Queries, joins, windows, CTEs, analytics questions and interview SQL drills.",
+    "chapters": [
+      "Selects",
+      "Joins",
+      "Windows",
+      "Analytics"
+    ],
+    "color": "from-teal-300 to-emerald-600",
+    "certificate": true,
+    "overview": "SQL is used to ask questions from tables. You can filter, sort, group, join and summarize data.",
+    "sections": [
+      {
+        "heading": "SELECT",
+        "body": "SELECT chooses the columns you want to see from a table."
+      },
+      {
+        "heading": "WHERE",
+        "body": "WHERE filters rows based on a condition, like price greater than 500."
+      },
+      {
+        "heading": "JOIN",
+        "body": "JOIN combines data from two or more tables using a matching column."
+      },
+      {
+        "heading": "GROUP BY",
+        "body": "GROUP BY helps summarize rows, like total sales by month or users by country."
+      }
+    ],
+    "example": "SELECT course, COUNT(*) FROM enrollments GROUP BY course;",
+    "practice": [
+      "Write a SELECT query.",
+      "Filter active users.",
+      "Join users with orders.",
+      "Group sales by category."
+    ],
+    "quiz": [
+      {
+        "question": "What does WHERE do?",
+        "answer": "It filters rows."
+      },
+      {
+        "question": "Why do we use JOIN?",
+        "answer": "To combine related tables."
+      }
+    ]
+  },
+  {
+    "slug": "cs-core-interview-kit",
+    "title": "CS Core Interview Kit",
+    "category": "Interview",
+    "level": "Intermediate",
+    "lessons": 46,
+    "description": "Prepare the core topics: operating systems, DBMS, OOP, networking and common placement questions.",
+    "chapters": [
+      "OS",
+      "DBMS",
+      "OOP",
+      "Networks"
+    ],
+    "color": "from-violet-400 to-rose-500",
+    "certificate": true,
+    "overview": "CS core topics help in interviews and exams. Focus on DBMS, operating systems, OOP and computer networks.",
+    "sections": [
+      {
+        "heading": "DBMS",
+        "body": "DBMS teaches how data is stored, related, protected and queried."
+      },
+      {
+        "heading": "Operating systems",
+        "body": "OS topics include processes, threads, memory, scheduling and deadlocks."
+      },
+      {
+        "heading": "OOP",
+        "body": "OOP uses classes and objects to organize code. Learn inheritance, polymorphism, abstraction and encapsulation."
+      },
+      {
+        "heading": "Computer networks",
+        "body": "Networks explain how data moves between devices using protocols like HTTP, TCP and IP."
+      }
+    ],
+    "example": "Example: In OOP, a Vehicle class can be inherited by Car and Bike classes.",
+    "practice": [
+      "Explain normalization.",
+      "Compare process and thread.",
+      "Define polymorphism.",
+      "Explain HTTP request and response."
+    ],
+    "quiz": [
+      {
+        "question": "What does DBMS manage?",
+        "answer": "Stored data and database operations."
+      },
+      {
+        "question": "What is encapsulation?",
+        "answer": "Keeping data and methods together with controlled access."
+      }
+    ]
+  },
+  {
+    "slug": "machine-learning-launchpad",
+    "title": "Machine Learning Launchpad",
+    "category": "AI/ML",
+    "level": "Advanced",
+    "lessons": 54,
+    "description": "Regression, classification, evaluation, feature engineering and model demos.",
+    "chapters": [
+      "Roadmap",
+      "Models",
+      "Evaluation",
+      "Projects"
+    ],
+    "color": "from-violet-400 to-rose-500",
+    "certificate": true,
+    "overview": "Machine learning helps computers learn patterns from data. You train a model, test it and use it for predictions.",
+    "sections": [
+      {
+        "heading": "Dataset",
+        "body": "A dataset contains examples. Each row is usually one example and each column is a feature."
+      },
+      {
+        "heading": "Training",
+        "body": "Training means the model studies data and learns patterns from it."
+      },
+      {
+        "heading": "Evaluation",
+        "body": "Evaluation checks how well the model works on data it has not seen before."
+      },
+      {
+        "heading": "Prediction",
+        "body": "After training, the model can predict values or classes for new data."
+      }
+    ],
+    "example": "Example: A model can learn past customer data and predict whether a customer may leave.",
+    "practice": [
+      "List features for a student score model.",
+      "Split data into train and test sets.",
+      "Compare accuracy and precision."
+    ],
+    "quiz": [
+      {
+        "question": "What is training?",
+        "answer": "The process where a model learns patterns from data."
+      },
+      {
+        "question": "Why do we test a model?",
+        "answer": "To check performance on new data."
+      }
+    ]
+  },
+  {
+    "slug": "deep-learning-visualized",
+    "title": "Deep Learning Visualized",
+    "category": "AI/ML",
+    "level": "Advanced",
+    "lessons": 42,
+    "description": "Neural networks, backpropagation, CNNs, transformers and animated experiments.",
+    "chapters": [
+      "Neurons",
+      "Training",
+      "CNNs",
+      "Transformers"
+    ],
+    "color": "from-slate-500 to-cyan-500",
+    "certificate": true,
+    "overview": "Deep learning uses neural networks with many layers. It is useful for images, text, speech and complex patterns.",
+    "sections": [
+      {
+        "heading": "Neurons",
+        "body": "A neuron takes inputs, applies weights and produces an output."
+      },
+      {
+        "heading": "Layers",
+        "body": "Layers pass information forward. Earlier layers learn simple patterns and later layers learn deeper patterns."
+      },
+      {
+        "heading": "Backpropagation",
+        "body": "Backpropagation helps the network adjust weights when the prediction is wrong."
+      },
+      {
+        "heading": "Applications",
+        "body": "Deep learning is used in image recognition, chatbots, translation and recommendation systems."
+      }
+    ],
+    "example": "Example: An image model may learn edges first, then shapes, then full objects.",
+    "practice": [
+      "Draw a three-layer neural network.",
+      "Explain weights in one sentence.",
+      "List two deep learning use cases."
+    ],
+    "quiz": [
+      {
+        "question": "What is a neuron?",
+        "answer": "A small unit that receives inputs and produces an output."
+      },
+      {
+        "question": "What does backpropagation do?",
+        "answer": "It adjusts weights to reduce errors."
+      }
+    ]
+  }
+]

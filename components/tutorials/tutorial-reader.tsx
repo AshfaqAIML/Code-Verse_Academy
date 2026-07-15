@@ -385,9 +385,14 @@ function TutorialBlock({ block, id }: { block: LibraryBookBlock; id: string }) {
 function looksLikeCode(text: string) {
   return (
     /^(from |import |def |class |const |let |var |function |SELECT |CREATE |INSERT |UPDATE |DELETE |docker |uvicorn |pip )/.test(text) ||
-    /(?:Input:|Output:|→)/.test(text) ||
+    /(?:Input:|Output:|→|=>)/.test(text) ||
     /[A-Za-z_][\w]*\s*=/.test(text) ||
-    /\bprint\(/.test(text)
+    /\b(?:print|len|sum|sorted|range|int|float|str|list|dict|set|type|open|input|id|isinstance|enumerate|zip|map|filter|reduce|reversed|abs|max|min|round)\(/.test(text) ||
+    /^\d+$/.test(text.trim()) ||
+    /^(True|False|None)$/.test(text.trim()) ||
+    /^\d+[A-Za-z_]/.test(text) ||
+    /\)\d/.test(text) ||
+    /\b(?:for |while |if |elif |else:|def |class |try:|except|with |return |yield |async |await |import |from |raise )/.test(text)
   );
 }
 
@@ -399,6 +404,8 @@ function restoreCodeFormatting(text: string) {
   formatted = formatted.replace(/(?<=[0-9"'`\]\)])(?=\s*[A-Za-z_][\w]*\s*=)/g, "\n");
   formatted = formatted.replace(/(?<=[A-Za-z0-9"'`\]\)])(?=print\()/g, "\n");
   formatted = formatted.replace(/(?<=[0-9])(?=Output:)/g, "\n");
+  formatted = formatted.replace(/([a-z])(\d\s*[*/+\->])/g, "$1\n$2");
+  formatted = formatted.replace(/([a-z])(?=\d+\s*→)/g, "$1\n");
   return formatted.replace(/\n{3,}/g, "\n\n");
 }
 

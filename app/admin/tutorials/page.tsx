@@ -6,13 +6,12 @@ import { Plus, Pencil, Trash2, ExternalLink, Database, AlertCircle } from "lucid
 import { Section } from "@/components/section";
 
 type TutorialSummary = {
-  _id: string;
   slug: string;
   title: string;
   category?: string;
   level?: string;
   lessons?: number;
-  updatedAt: string;
+  updatedAt?: string;
 };
 
 export default function AdminTutorialsPage() {
@@ -58,7 +57,7 @@ export default function AdminTutorialsPage() {
   }
 
   async function handleMigrate() {
-    if (!confirm("Import existing tutorial content from the codebase into MongoDB?")) return;
+    if (!confirm("Import existing tutorial content from the codebase?")) return;
     setMigrating(true);
     try {
       const token = localStorage.getItem("codeverse-token");
@@ -134,7 +133,7 @@ export default function AdminTutorialsPage() {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
               {tutorials.map((t) => (
-                <tr key={t._id} className="transition hover:bg-slate-50 dark:hover:bg-slate-900/40">
+                <tr key={t.slug} className="transition hover:bg-slate-50 dark:hover:bg-slate-900/40">
                   <td className="px-5 py-4 font-semibold">{t.title}</td>
                   <td className="px-5 py-4 text-slate-500">{t.slug}</td>
                   <td className="px-5 py-4">{t.category ?? "—"}</td>

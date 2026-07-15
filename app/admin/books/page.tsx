@@ -39,7 +39,7 @@ export default function AdminBooksPage() {
   useEffect(() => { fetchBooks(); }, []);
 
   async function handleMigrate() {
-    if (!confirm("Import all books from the codebase into MongoDB? This may take a moment.")) return;
+    if (!confirm("Import all books from the codebase? This may take a moment.")) return;
     setMigrating(true);
     try {
       const token = localStorage.getItem("codeverse-token");
@@ -62,7 +62,7 @@ export default function AdminBooksPage() {
     <Section
       eyebrow="Content management"
       title="Books"
-      copy="Manage full-length book content. Books are large — use the import tool to load them from the codebase into MongoDB."
+      copy="Manage full-length book content. Books are large — use the import tool to load them from the codebase."
     >
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <button
@@ -86,12 +86,12 @@ export default function AdminBooksPage() {
       ) : (
         <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Books are imported from JSON files in <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs dark:bg-slate-800">data/books/</code>. 
-            Click the import button above to load them into MongoDB for editing via the admin panel.
+            Books are imported from JSON files in <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs dark:bg-slate-800">data/</code>. 
+            Click the import button above to load them for editing via the admin panel.
             Full book content editing is available after import.
           </p>
           <p className="mt-3 text-sm text-slate-400">
-            You can also edit book JSON files directly in the <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs dark:bg-slate-800">data/books/</code> directory and re-import.
+            You can also edit book JSON files directly in the <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs dark:bg-slate-800">data/</code> directory and re-import.
           </p>
         </div>
       )}
