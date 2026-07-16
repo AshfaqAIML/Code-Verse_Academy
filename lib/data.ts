@@ -221,6 +221,7 @@ export const navItems = [
   { label: "Home", href: "/", icon: PanelTop },
   { label: "Courses", href: "/courses", icon: GraduationCap },
   { label: "Tutorials", href: "/tutorials", icon: NotebookTabs },
+  { label: "AI Classroom", href: "/ai-classroom", icon: Bot },
   { label: "Playground", href: "/playground", icon: MonitorPlay },
   { label: "Dashboard", href: "/dashboard", icon: LineChart },
   { label: "Practice", href: "/practice", icon: Trophy },
