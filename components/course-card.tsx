@@ -52,7 +52,7 @@ export function CourseCard({ course }: { course: Course }) {
             {course.level}
           </span>
         </div>
-        <p className="min-h-[72px] text-sm leading-6 text-slate-600 dark:text-slate-300">{course.description}</p>
+        <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">{course.description}</p>
         <div className="mt-5 flex flex-wrap gap-2">
           {course.chapters.map((chapter) => (
             <span

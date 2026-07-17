@@ -102,20 +102,20 @@ export function TutorialBookGrid({ books }: TutorialBookGridProps) {
                 }
                 className="group overflow-hidden rounded-3xl border border-slate-200 bg-white transition hover:-translate-y-1 hover:border-brand-500 hover:shadow-2xl hover:shadow-cyan-100 dark:border-slate-800 dark:bg-slate-900 dark:hover:shadow-black/20"
               >
-                <div className={`relative h-40 overflow-hidden bg-gradient-to-br ${theme.a} ${theme.b} ${theme.c}`}>
+                <div className={`relative min-h-[160px] overflow-hidden bg-gradient-to-br ${theme.a} ${theme.b} ${theme.c}`}>
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,.36),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(34,211,238,.28),transparent_35%)]" />
                   <div className="absolute left-4 top-4 rounded-full border border-white/20 bg-white/15 px-3 py-1 text-xs font-black uppercase tracking-[0.22em] text-white/90 backdrop-blur">
                     {book.category}
                   </div>
                   <div className="absolute bottom-4 left-4 right-4">
-                    <div className="flex items-end justify-between gap-3">
-                      <div className="max-w-[65%]">
+                    <div className="flex items-end justify-between gap-2">
+                      <div className="min-w-0 flex-1">
                         <p className="text-[11px] font-black uppercase tracking-[0.3em] text-white/70">Volume</p>
-                        <h3 className="mt-2 text-2xl font-black tracking-tight text-white">{book.title}</h3>
+                        <h3 className="mt-2 text-xl font-black tracking-tight text-white">{book.title}</h3>
                       </div>
-                      <div className="rounded-2xl border border-white/20 bg-white/10 px-3 py-2 text-right backdrop-blur">
-                        <p className={`text-xs font-black uppercase tracking-[0.22em] ${theme.accent}`}>{book.level}</p>
-                        <p className="mt-1 text-xs font-semibold text-white/75">{estimatedMinutes} min read</p>
+                      <div className="shrink-0 rounded-2xl border border-white/20 bg-white/10 px-2.5 py-1.5 text-right backdrop-blur">
+                        <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${theme.accent}`}>{book.level}</p>
+                        <p className="mt-0.5 text-[10px] font-semibold text-white/75">{estimatedMinutes} min</p>
                       </div>
                     </div>
                   </div>
