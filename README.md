@@ -1,313 +1,271 @@
 # CodeVerse Academy
 
-CodeVerse Academy is a Next.js learning platform for web development, data science, AI/ML, interview prep, practice work, certificates, blogs, and guided reading.
+CodeVerse Academy is a comprehensive learning platform built with Next.js 15. It offers interactive tutorials, AI-powered learning tools, practice environments, certification, and community features for web development, data science, and AI/ML education.
 
-This README is written as a project map so another LLM or developer can quickly understand:
-
-- what the app already contains
-- where each feature lives
-- where new code should be added
-- how to avoid duplicating logic or content
+---
 
 ## Tech Stack
 
-- Frontend: Next.js 15 App Router, React 19, TypeScript, Tailwind CSS
-- Motion and UI: Framer Motion, Lucide icons, Recharts, Chart.js, Monaco Editor
-- Backend/API: Next.js route handlers plus an Express scaffold in `server/`
-- Auth scaffold: JWT-based login flow ready for a real auth provider
-- Content sources: local JSON files, extracted DOCX content, and seeded demo data
+| Layer | Technology |
+|-------|-----------|
+| **Frontend** | Next.js 15 App Router, React 19, TypeScript, Tailwind CSS v3 |
+| **UI Components** | Lucide icons, Framer Motion, Recharts, Chart.js, Monaco Editor |
+| **AI/LLM** | Multi-provider (OpenAI, Anthropic, Google Gemini, DeepSeek) via AI SDK |
+| **Auth** | JWT-based login (Google OAuth ready) |
+| **Storage** | Local JSON files, extracted DOCX content, file-based storage |
+| **Backend** | Next.js route handlers + Express scaffold in `server/` |
 
-## Run Scripts
+## Quick Start
 
 ```bash
 npm install
-npm run dev
-npm run server
-npm run dev:full
-npm run build
+npm run dev        # Frontend at http://localhost:3000
 ```
 
-- Frontend: `http://localhost:3000`
-- Backend API scaffold: `http://localhost:4000`
+### Environment Variables
+
+Create `.env.local`:
+
+```env
+# At least one LLM provider key is required for AI features
+OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...
+GOOGLE_API_KEY=...
+DEEPSEEK_API_KEY=...
+
+# Optional: choose default provider and model
+AI_PROVIDER=openai          # openai | anthropic | google | deepseek
+AI_MODEL=gpt-4o-mini
+
+# Auth (optional)
+JWT_SECRET=your-secret
+MONGODB_URI=...
+GOOGLE_CLIENT_ID=...
+GITHUB_CLIENT_ID=...
+```
+
+### Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start Next.js dev server |
+| `npm run build` | Production build |
+| `npm run server` | Start Express backend scaffold on port 4000 |
+| `npm run dev:full` | Run both frontend and backend |
+
+---
 
 ## Project Layout
 
-```text
-app/                Next.js routes and pages
-components/         Shared UI and feature-specific client components
-data/               Generated content, books, blog JSON, CSV samples
-docs/               Architecture notes for specific systems
-lib/                Shared data access, feature logic, and content helpers
-server/             Express API scaffold and server-side models
-scripts/            Content extraction and generation utilities
-playground/         Separate standalone playground stack with its own frontend/backend
-Blogs.docx          Source Word file for the blog articles
 ```
+app/                    Next.js App Router pages and routes
+  ai-classroom/         AI-powered learning tools (7 tools)
+  api/                  API route handlers
+  blog/                 Blog index and articles
+  courses/              Course grid and tracks
+  tutorials/            Tutorial book reader
+  practice/             Practice workspace
+  playground/           Code playground
+  dashboard/            Learner dashboard
+  projects/             Project showcase
+  certifications/       Certificate studio
+  data-science/         Data science learning page
+  ai-ml/                AI/ML learning page
+  community/            Community page
+  login, register, profile, admin
+
+components/             Shared UI and feature-specific components
+data/                   Generated content: books, blogs, CSV samples
+docs/                   Architecture and design notes
+lib/                    Shared logic, content helpers, AI classroom modules
+server/                 Express API scaffold
+scripts/                Content extraction utilities
+playground/             Standalone sandbox (separate Vite + Express app)
+```
+
+---
+
+## AI Classroom — 7 Learning Tools
+
+The AI Classroom (`/ai-classroom`) is the platform's AI-powered learning suite. Each tool lives in `app/ai-classroom/<tool>/` and is backed by a shared LLM layer in `lib/ai-classroom/`.
+
+### Tools
+
+| Tool | Route | Description |
+|------|-------|-------------|
+| **Smart Quiz** | `/ai-classroom/quiz` | AI-generated quizzes from lesson content. Timer, difficulty selector, progress bar, skip questions, detailed scoring |
+| **Flashcards** | `/ai-classroom/flashcards` | AI-generated flashcards with 3D CSS flip animation, keyboard nav (← → Space), shuffle, progress tracking |
+| **Voice Learning** | `/ai-classroom/voice` | Speech recognition + synthesis in 7 languages. Click-to-speak, transcript preview, read-aloud |
+| **AI Notes** | `/ai-classroom/notes` | Structured notes with localStorage persistence, search, AI generation from content, word count, duplicate |
+| **Code Mentor** | `/ai-classroom/code-mentor` | Review/Debug/Optimize/Explain modes. Paste code, get AI analysis, ask follow-ups |
+| **AI Whiteboard** | `/ai-classroom/whiteboard` | HTML5 Canvas drawing board. Pen, shapes, text, eraser, fill color, undo/redo, download PNG |
+| **AI Classmates** | `/ai-classroom/classmates` | Multi-agent group discussion. Beginner/Intermediate/Advanced AI peers discuss together via SSE streaming |
+
+### AI Backend Architecture
+
+```
+lib/ai-classroom/
+  providers.ts          -- Multi-provider LLM factory (OpenAI, Anthropic, Google, DeepSeek)
+  llm.ts                -- streamAI / callAI helpers
+  types.ts              -- Shared types (ChatMessage, ChatRequest, SSEEvent, DirectorState)
+  use-chat-history.ts   -- Generic localStorage hook for chat persistence
+  agents.ts             -- Agent definitions (teacher, assistant, classmates)
+  generation/
+    types.ts            -- QuizContent, Flashcard, GenerationRequest types
+    outline-generator.ts-- Chapter outline generation
+    content-generator.ts-- Quiz and flashcard content generation
+  orchestration/
+    prompt-builder.ts   -- System prompts for multi-agent discussions
+    director.ts         -- Director loop: cycles agents via LLM decisions with SSE streaming
+
+app/api/ai-classroom/
+  chat/route.ts         -- POST handler: single-agent or multi-agent chat with SSE
+  generate/route.ts     -- POST handler: generate outlines, quizzes, flashcards
+```
+
+### Key design decisions
+
+- **Multi-provider**: Supports 4 LLM providers via environment variables. Default: `openai` / `gpt-4o-mini`. Set `AI_PROVIDER` and `AI_MODEL` in env.
+- **SSE streaming**: All AI responses stream via Server-Sent Events for real-time UI updates.
+- **Multi-agent orchestration**: Lightweight director loop (no LangGraph dependency) — agents take turns based on LLM director decisions.
+- **localStorage persistence**: Chat history is saved per page via the `useChatHistory` hook. Clear buttons provided on each surface.
+- **No UI framework**: All tools use Tailwind CSS with custom components to match the platform's design language.
+
+---
 
 ## Route Map
 
-### App routes
+### App Routes
 
-- `/` - landing page
-- `/courses` - course grid and learning tracks
-- `/tutorials` - tutorial index
-- `/tutorials/[book]` - tutorial book overview
-- `/tutorials/[book]/[chapter]` - tutorial chapter reader
-- `/tutorial/[slug]` - single-course tutorial view
-- `/practice` - practice classroom and task workspace
-- `/playground` - code playground
-- `/dashboard` - learner dashboard
-- `/blog` - blog index
-- `/blog/[slug]` - full article reader
-- `/projects` - projects showcase
-- `/data-science` - data science learning page
-- `/ai-ml` - AI/ML learning page
-- `/community` - community page
-- `/certifications` - certificate studio
-- `/verify/[id]` - certificate verification page
-- `/login`, `/register`, `/profile`, `/admin` - account and admin pages
+| Route | Page |
+|-------|------|
+| `/` | Landing page |
+| `/courses` | Course grid and learning tracks |
+| `/tutorials` | Tutorial index |
+| `/tutorials/[book]/[chapter]` | Tutorial chapter reader |
+| `/practice` | Practice classroom and task workspace |
+| `/playground` | Code playground |
+| `/dashboard` | Learner dashboard |
+| `/blog` | Blog index |
+| `/blog/[slug]` | Full article reader |
+| `/projects` | Projects showcase |
+| `/data-science` | Data science learning page |
+| `/ai-ml` | AI/ML learning page |
+| `/community` | Community page |
+| `/certifications` | Certificate studio |
+| `/verify/[id]` | Certificate verification page |
+| `/login`, `/register`, `/profile`, `/admin` | Account and admin pages |
 
-### API routes
+### API Routes
 
-- `POST /api/auth/login`
-- `GET /api/practice`
-- `POST /api/practice`
-- `GET /api/certificates`
-- `POST /api/certificates`
-- `POST /api/ai/revision`
-- `POST /api/revision/history`
+| Route | Method | Purpose |
+|-------|--------|---------|
+| `/api/auth/login` | POST | JWT login |
+| `/api/practice` | GET, POST | Practice tracks |
+| `/api/certificates` | GET, POST | Certificate management |
+| `/api/ai/revision` | POST | AI revision assistant |
+| `/api/revision/history` | POST | Revision history |
+| `/api/ai-classroom/chat` | POST | Single-agent / multi-agent chat (SSE) |
+| `/api/ai-classroom/generate` | POST | Generate outlines, quizzes, flashcards |
 
-## What Lives Where
-
-### `app/`
-
-Each folder in `app/` is a route. Use this when the feature is page-specific.
-
-- Put page entry components in `page.tsx`.
-- Put route-specific metadata or server data fetching next to the page.
-- Put dynamic route readers in `app/<section>/[slug]/page.tsx` or nested route folders.
-
-Important patterns already used here:
-
-- `app/layout.tsx` wraps the whole app with `ThemeProvider` and `AppShell`.
-- `app/blog/[slug]/page.tsx` uses `generateStaticParams()` for static article pages.
-- `app/tutorials/[book]/[chapter]/page.tsx` uses a reader component to keep the page file small.
-
-### `components/`
-
-Use this for reusable UI and feature components.
-
-Current high-value components:
-
-- `components/app-shell.tsx` - global sidebar, header, theme, auth state
-- `components/section.tsx` - reusable section wrapper
-- `components/blog/blog-reader.tsx` - article reader layout
-- `components/tutorials/tutorial-reader.tsx` - tutorial chapter reader
-- `components/practice/practice-platform.tsx` - practice classroom and task workspace
-- `components/revision/*` - AI revision assistant and revision center
-- `components/certificates/certificate-studio.tsx` - certificate studio UI
-- `components/playground.tsx` - playground editor/output experience
-- `components/charts.tsx` - dashboard charts
-
-Use `components/` when:
-
-- multiple routes need the same UI
-- a route file is getting too large
-- the feature has its own interaction state
-
-### `lib/`
-
-Use this for shared data, parsing, business rules, and feature-specific helpers.
-
-Current modules:
-
-- `lib/data.ts` - global navigation, categories, courses, metrics, and demo content
-- `lib/books.ts` - book registry access and tutorial chapter lookup
-- `lib/blogs.ts` - blog article access from generated JSON
-- `lib/practice.ts` - practice track creation and task generation
-- `lib/certificates.ts` - certificate helpers
-- `lib/revision/*` - revision AI types, prompts, agent, and export helpers
-
-Rule of thumb:
-
-- page-specific UI goes in `app/` or `components/`
-- shared content lookup goes in `lib/`
-- never duplicate static content in multiple pages if it can be loaded from `lib/`
-
-### `data/`
-
-This folder holds the content data the app consumes.
-
-- `data/books/*.json` - extracted tutorial books and chapters
-- `data/books/registry.json` - book index used by tutorial and practice pages
-- `data/blogs.json` - parsed blog articles from `Blogs.docx`
-- `data/sample-certificate-bulk.csv` - sample certificate import data
-
-The blog and book JSON files are generated content, not hand-written page copy.
-
-### `server/`
-
-Express scaffold for when you want a separate backend process.
-
-- `server/index.js` - server entry
-- `server/models/revision-models.js` - revision-related data models
-- `server/README.md` - backend notes
-
-Use `server/` when a feature needs:
-
-- a standalone API
-- persistent storage logic
-- backend auth or queues outside Next.js route handlers
-
-### `playground/`
-
-This is a separate sandbox application, not the same thing as the main `/playground` route in `app/`.
-
-- `playground/frontend/` - standalone Vite React UI
-- `playground/backend/` - standalone Express backend, DB, routes, middleware, and utilities
-- `playground/INTEGRATION.md` - setup and integration notes
-
-Use this folder when you are working on the isolated playground stack. Do not copy its UI or backend logic into the main app unless the feature is intentionally being shared.
-
-If you want to merge the playground backend into an existing backend structure, use a layout like this:
-
-```text
-your-existing-backend/
-├── src/ (or wherever your main code lives)
-│   ├── app.js (or server.js / index.js)  <-- existing main entry
-│   ├── config/                           <-- existing DB/config files
-│   ├── routes/
-│   │   ├── users.js                      <-- existing routes
-│   │   └── playground/                   <-- create this folder for playground APIs
-│   │       ├── projects.js              <-- move playground/backend/routes/projects.js here
-│   │       ├── templates.js             <-- move playground/backend/routes/templates.js here
-│   │       ├── export.js                <-- move playground/backend/routes/export.js here
-│   │       └── import.js                <-- move playground/backend/routes/import.js here
-│   ├── middleware/
-│   │   ├── auth.js                       <-- existing auth middleware
-│   │   └── playground/                   <-- create this folder for playground middleware
-│   │       └── validators.js            <-- move playground/backend/middleware/validators.js here
-│   └── controllers/                      <-- optional, if your backend uses controllers
-```
-
-Recommended rule: keep playground-specific backend code grouped under a `playground/` namespace so you do not duplicate route names, validators, or service logic across the app.
-
-### `scripts/`
-
-Utilities that turn source docs into app-ready data.
-
-- `scripts/extract-docx-library.py` - generates tutorial book JSON from DOCX source books
-- `scripts/extract-blog-articles.py` - generates blog article JSON from `Blogs.docx`
-
-If you change the source Word file, rerun the matching script so the app stays in sync.
+---
 
 ## Content Sources
 
-### Tutorials and books
+### Tutorials & Books
 
-The tutorial library is backed by `data/books/*.json`.
+Tutorial content lives in `data/books/*.json` with a registry at `data/books/registry.json`.
 
-- `lib/books.ts` reads the registry and chapter data.
-- `app/tutorials/[book]/page.tsx` lists chapters.
-- `app/tutorials/[book]/[chapter]/page.tsx` renders the chapter reader.
-- `components/tutorials/tutorial-reader.tsx` owns the reading UI and revision flow.
+- `lib/books.ts` — book registry and chapter lookup
+- `app/tutorials/[book]/[chapter]/page.tsx` — chapter reader
+- `components/tutorials/tutorial-reader.tsx` — reading UI with revision flow
 
-### Blog articles
+Currently loaded: **AIML Engineer** (102 chapters), **AI/ML Handbook Volumes 1 & 2**.
 
-The blog content is sourced from `Blogs.docx`.
+### Blog Articles
 
-- `scripts/extract-blog-articles.py` parses the DOCX into `data/blogs.json`
-- `lib/blogs.ts` exposes article lookup helpers
-- `app/blog/page.tsx` shows the article index
-- `app/blog/[slug]/page.tsx` renders the article reader
-- `components/blog/blog-reader.tsx` handles article layout and section navigation
+Sourced from `Blogs.docx`, extracted to `data/blogs.json`.
 
-### Practice content
+- `lib/blogs.ts` — article lookup
+- `app/blog/page.tsx` — index
+- `app/blog/[slug]/page.tsx` — reader
+- `components/blog/blog-reader.tsx` — article layout
 
-Practice tracks are assembled from:
+### Practice Content
 
-- course metadata in `lib/data.ts`
-- tutorial book summaries from `lib/books.ts`
-- task generation in `lib/practice.ts`
+Assembled from course metadata (`lib/data.ts`) and book summaries (`lib/books.ts`).
 
-The main practice UI is in `components/practice/practice-platform.tsx`.
-
-### AI revision content
-
-The AI revision flow is driven by:
-
-- `components/revision/revision-assistant.tsx`
-- `components/revision/revision-center.tsx`
-- `lib/revision/prompts.ts`
-- `lib/revision/agent.ts`
-- `app/api/ai/revision/route.ts`
-
-Design notes for that system are in `docs/ai-revision-architecture.md`.
+- `lib/practice.ts` — track/task generation
+- `components/practice/practice-platform.tsx` — practice UI
 
 ### Certificates
 
-Certificate design and data flow are covered in:
+- `components/certificates/certificate-studio.tsx` — certificate designer
+- `docs/certificate-system.md` — design docs
 
-- `components/certificates/certificate-studio.tsx`
-- `app/api/certificates/route.ts`
-- `app/verify/[id]/page.tsx`
-- `docs/certificate-system.md`
+---
 
-## Where To Put New Code
+## Components Library
 
-Use this as the default placement guide.
+All shared UI components live in `components/`:
 
-- New page or route-specific screen: `app/<route>/page.tsx`
-- New reusable UI block: `components/<feature>/...`
-- New data lookup or content helper: `lib/<feature>.ts`
-- New API endpoint: `app/api/<feature>/route.ts`
-- New backend service or model: `server/`
-- New source-to-JSON generator: `scripts/`
-- New static content generated from a doc or dataset: `data/`
+| Component | Purpose |
+|-----------|---------|
+| `app-shell.tsx` | Global layout: sidebar, header, theme toggle, auth state |
+| `section.tsx` | Reusable page section wrapper |
+| `blog/blog-reader.tsx` | Article reader with section navigation |
+| `tutorials/tutorial-reader.tsx` | Chapter reader with revision flow |
+| `practice/practice-platform.tsx` | Practice workspace |
+| `playground.tsx` | Code editor and output |
+| `charts.tsx` | Dashboard charts |
+| `certificates/certificate-studio.tsx` | Certificate designer |
+| `revision/*` | AI revision assistant and center |
+| `ai-classroom/chat-panel.tsx` | Reusable single-agent chat panel |
+| `ai-classroom/classmates-page.tsx` | Multi-agent group discussion |
 
-## How To Extend The Project Without Duplicating Code
+---
 
-When adding a new module, use the closest existing pattern instead of inventing a fresh one.
+## Where To Add New Code
 
-Examples:
+| What | Where |
+|------|-------|
+| New page or route | `app/<route>/page.tsx` |
+| New reusable UI | `components/<feature>/...` |
+| New API endpoint | `app/api/<feature>/route.ts` |
+| New shared logic | `lib/<feature>.ts` |
+| New AI tool | `app/ai-classroom/<tool>/page.tsx` + helpers in `lib/ai-classroom/` |
+| New backend service | `server/` |
+| New content extractor | `scripts/` |
+| New static content | `data/` |
 
-- If you add a new blog article, update `Blogs.docx`, rerun `scripts/extract-blog-articles.py`, and let `lib/blogs.ts` feed the page.
-- If you add another tutorial book, generate a new JSON file in `data/books/`, add it to `registry.json`, and read it through `lib/books.ts`.
-- If you add a new reader page, keep the data lookup in `lib/` and the UI in a reusable component under `components/`.
-- If a page starts mixing layout, data shaping, and feature logic, split the logic out before duplicating it elsewhere.
+### Principles
 
-## Existing Design Patterns
-
-- Global navigation and header live in `components/app-shell.tsx`.
-- Shared page framing uses `components/section.tsx`.
-- Reader experiences use a main reading column plus a side index or inspector.
-- Large learning surfaces prefer route-specific feature components instead of keeping everything in the page file.
-- Static content is often generated into JSON first, then read by the UI.
-
-## Environment Notes
-
-- `next.config.mjs` and `tsconfig.json` are set up for the current Next.js and TypeScript workflow.
-- `resolveJsonModule` is enabled, so JSON content can be imported directly from `lib/`.
-- The repo already contains `.next/` build output and local log files from prior runs; those are not source files.
-
-## If You Are An LLM Reading This Repo
-
-Before writing new code:
-
-1. Find the nearest existing route or feature component.
-2. Check whether the data already exists in `lib/` or `data/`.
-3. Reuse the same route pattern before adding a new folder.
+1. Find the nearest existing pattern before creating a new one.
+2. Keep data lookup in `lib/`, UI in `components/`, pages in `app/`.
+3. Never duplicate static content across pages — load from `lib/`.
 4. Keep server-only logic out of client components.
-5. Keep content generation in `scripts/` and rendered UI in `components/` or `app/`.
-6. If you need to add something new, place it beside the most similar existing module instead of creating a duplicate system.
+5. Content generation goes in `scripts/`, rendered UI goes in `components/` or `app/`.
 
-This repo is already organized around a few stable pillars:
+---
 
-- `app/` for routes
-- `components/` for UI
-- `lib/` for shared logic
-- `data/` for generated content
-- `scripts/` for content extraction
-- `server/` for backend scaffolding
+## Deployment
 
-That is usually the fastest way to figure out where a new feature belongs.
+The project is deployed on **Vercel** at [code-verse-academy.vercel.app](https://code-verse-academy.vercel.app).
+
+```bash
+# Deploy via Vercel CLI
+vercel --prod
+```
+
+Set all required environment variables in the Vercel project dashboard under **Settings → Environment Variables**.
+
+---
+
+## Design Patterns
+
+- **Global navigation**: `components/app-shell.tsx` owns sidebar, header, theme, auth.
+- **Page framing**: `components/section.tsx` provides consistent section layout.
+- **Reader pattern**: Main reading column + side index/inspector.
+- **AI pattern**: Client-side streaming via fetch/ReadableStream → SSE parsing → React state.
+- **Storage pattern**: `lib/` modules abstract localStorage and data access behind simple APIs.
+- **Dark mode**: Tailwind `dark:` variants + `ThemeProvider` in layout.
