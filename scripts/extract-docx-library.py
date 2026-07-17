@@ -22,7 +22,7 @@ BOOKS = [
     "BOOK 2 Backend Development & Databases.docx",
     "BOOK 3 Advanced Backend & System Design.docx",
     "Python for Backend Development.docx",
-    "Python Engineering.docx",
+    "Python Mastery.docx",
     "Backend Engineering to AI Systems.docx",
     "PYTHON DSA.docx",
 ]
@@ -91,9 +91,9 @@ BOOK_META = {
         "level": "Complete Book",
         "description": "Build production-ready Python backends with FastAPI, databases, auth, testing, Docker and deployment.",
     },
-    "Python Engineering.docx": {
+    "Python Mastery.docx": {
         "slug": "python-engineering",
-        "title": "Python Engineering",
+        "title": "Python Mastery",
         "category": "Programming",
         "level": "Professional",
         "description": "Write cleaner, stronger Python with engineering practices, architecture and maintainable code.",
