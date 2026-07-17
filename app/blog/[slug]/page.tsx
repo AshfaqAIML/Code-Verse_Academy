@@ -1,10 +1,6 @@
 import { notFound } from "next/navigation";
 import { BlogReader } from "@/components/blog/blog-reader";
-import { getBlogArticle, getBlogArticleSlugs, getBlogArticles } from "@/lib/blogs";
-
-export function generateStaticParams() {
-  return getBlogArticleSlugs();
-}
+import { getBlogArticle, getBlogArticles } from "@/lib/blogs";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

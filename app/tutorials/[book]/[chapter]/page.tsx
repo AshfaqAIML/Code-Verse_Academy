@@ -1,19 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { TutorialReader } from "@/components/tutorials/tutorial-reader";
-import { getLibraryBook, getLibraryBooks, getLibraryChapter } from "@/lib/books";
+import { getLibraryBook, getLibraryChapter } from "@/lib/books";
 
 type PageParams = Promise<{ book: string; chapter: string }>;
-
-export function generateStaticParams() {
-  return getLibraryBooks().flatMap((book) => {
-    const bookData = getLibraryBook(book.slug);
-    return (bookData?.chapters ?? []).map((chapter) => ({
-      book: book.slug,
-      chapter: chapter.slug
-    }));
-  });
-}
 
 export async function generateMetadata({ params }: { params: PageParams }): Promise<Metadata> {
   const { book: bookSlug, chapter: chapterSlug } = await params;

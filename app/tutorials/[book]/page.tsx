@@ -2,13 +2,9 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, BookOpen, Clock3, Layers3, Sparkles } from "lucide-react";
-import { getLibraryBook, getLibraryBooks } from "@/lib/books";
+import { getLibraryBook } from "@/lib/books";
 
 type PageParams = Promise<{ book: string }>;
-
-export function generateStaticParams() {
-  return getLibraryBooks().map((book) => ({ book: book.slug }));
-}
 
 export async function generateMetadata({ params }: { params: PageParams }): Promise<Metadata> {
   const { book: bookSlug } = await params;

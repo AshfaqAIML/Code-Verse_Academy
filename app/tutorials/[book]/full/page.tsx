@@ -1,11 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, BookOpenText, ChevronRight, ListChecks } from "lucide-react";
-import { getLibraryBook, getLibraryBooks, type LibraryBookBlock } from "@/lib/books";
-
-export function generateStaticParams() {
-  return getLibraryBooks().map((book) => ({ book: book.slug }));
-}
+import { getLibraryBook, type LibraryBookBlock } from "@/lib/books";
 
 export default async function FullTutorialBookPage({ params }: { params: Promise<{ book: string }> }) {
   const { book: bookSlug } = await params;
