@@ -1,46 +1,18 @@
 import { Section } from "@/components/section";
-import { Bot, BrainCircuit, GraduationCap, Users, Sparkles, NotebookTabs, ListChecks, BookOpen, Mic, PenLine, Code2, ArrowRight } from "lucide-react";
+import { Bot, BrainCircuit, GraduationCap, Users, Sparkles, NotebookTabs, ListChecks, BookOpen, Mic, PenLine, Code2, ArrowRight, MessageSquareMore } from "lucide-react";
 import Link from "next/link";
 import { getAICourses } from "@/lib/ai-classroom/courses";
 
-const agents = [
-  {
-    title: "AI Teacher",
-    description: "Explains concepts step by step with diagrams, examples, and interactive whiteboard.",
-    icon: GraduationCap,
-    href: "/ai-classroom/teacher",
-    color: "from-cyan-400 to-blue-500"
-  },
-  {
-    title: "AI Assistant",
-    description: "Simplifies difficult topics, explains terminology, and creates summaries on demand.",
-    icon: Bot,
-    href: "/ai-classroom/assistant",
-    color: "from-emerald-400 to-teal-500"
-  },
-  {
-    title: "AI Interviewer",
-    description: "Conducts mock interviews with real-time feedback, scoring, and improvement tips.",
-    icon: BrainCircuit,
-    href: "/ai-classroom/interviewer",
-    color: "from-violet-400 to-purple-500"
-  },
-  {
-    title: "AI Classmates",
-    description: "Learn with AI peers who ask questions, discuss concepts, and simulate a real classroom.",
-    icon: Users,
-    href: "/ai-classroom/classmates",
-    color: "from-rose-400 to-orange-500"
-  }
-];
-
 const tools = [
-  { title: "Smart Quiz", description: "Auto-generated quizzes from any lesson with instant grading.", icon: ListChecks, href: "/ai-classroom/quiz" },
-  { title: "Flashcards", description: "AI-generated flashcards for quick revision and spaced repetition.", icon: NotebookTabs, href: "/ai-classroom/flashcards" },
-  { title: "Voice Learning", description: "Listen to lessons, ask questions by voice, and practice speaking.", icon: Mic, href: "/ai-classroom/voice" },
-  { title: "AI Notes", description: "Auto-generated structured notes with key concepts and summaries.", icon: PenLine, href: "/ai-classroom/notes" },
-  { title: "Code Mentor", description: "Get code reviews, bug detection, and optimization suggestions.", icon: Code2, href: "/ai-classroom/code-mentor" },
-  { title: "AI Whiteboard", description: "Interactive diagrams, flowcharts, and visual explanations.", icon: Sparkles, href: "/ai-classroom/whiteboard" }
+  { title: "AI Classmates", description: "Multi-agent group discussion with beginner, intermediate, and advanced AI peers.", icon: Users, href: "/ai-classroom/classmates", color: "from-rose-400 to-orange-500" },
+  { title: "Smart Quiz", description: "AI-generated quizzes from any lesson with timer, difficulty selector, and instant grading.", icon: ListChecks, href: "/ai-classroom/quiz", color: "from-emerald-400 to-teal-500" },
+  { title: "Flashcards", description: "AI-generated flashcards for quick revision with 3D flip animation and keyboard navigation.", icon: NotebookTabs, href: "/ai-classroom/flashcards", color: "from-amber-400 to-orange-500" },
+  { title: "Voice Learning", description: "Speak questions and listen to AI responses in 7 languages with speech recognition.", icon: Mic, href: "/ai-classroom/voice", color: "from-pink-400 to-rose-500" },
+  { title: "AI Notes", description: "AI-generated structured notes with search, word count, and localStorage persistence.", icon: PenLine, href: "/ai-classroom/notes", color: "from-violet-400 to-purple-500" },
+  { title: "Code Mentor", description: "AI-powered code reviews, debugging, optimization, and explanations across 10+ languages.", icon: Code2, href: "/ai-classroom/code-mentor", color: "from-blue-400 to-indigo-500" },
+  { title: "AI Whiteboard", description: "Interactive Canvas drawing board with shapes, text, fill color, undo/redo, and PNG export.", icon: Sparkles, href: "/ai-classroom/whiteboard", color: "from-amber-400 to-orange-500" },
+  { title: "AI Teacher", description: "Step-by-step explanations with examples, analogies, and interactive chat.", icon: GraduationCap, href: "/ai-classroom/teacher", color: "from-cyan-400 to-blue-500" },
+  { title: "AI Interviewer", description: "Mock interviews with real-time feedback, scoring, and improvement tips.", icon: BrainCircuit, href: "/ai-classroom/interviewer", color: "from-violet-400 to-purple-500" },
 ];
 
 const aiCourses = getAICourses();
@@ -64,28 +36,25 @@ export default function AIClassroomPage() {
         </div>
       </section>
 
-      <Section eyebrow="AI Agents" title="Meet your AI learning team" copy="Each agent has a unique role. Ask questions, get explanations, practice interviews, and learn together with AI classmates.">
-        <div className="grid gap-5 md:grid-cols-2">
-          {agents.map((agent) => {
-            const Icon = agent.icon;
+      <Section eyebrow="Learning Tools" title="Everything you need to learn" copy="AI-powered study tools that work with any lesson content. Generate, practice, review, and master any topic.">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {tools.map((tool) => {
+            const Icon = tool.icon;
             return (
               <Link
-                key={agent.title}
-                href={agent.href}
-                className="group overflow-hidden rounded-3xl border border-slate-200 bg-white transition hover:-translate-y-1 hover:border-brand-500 hover:shadow-xl hover:shadow-cyan-100 dark:border-slate-800 dark:bg-slate-900 dark:hover:shadow-black/20"
+                key={tool.title}
+                href={tool.href}
+                className="group overflow-hidden rounded-3xl border border-slate-200 bg-white transition hover:-translate-y-1 hover:border-brand-500 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900 dark:hover:shadow-black/20"
               >
-                <div className={`h-2 bg-gradient-to-r ${agent.color}`} />
+                <div className={`h-2 bg-gradient-to-r ${tool.color}`} />
                 <div className="p-6">
                   <div className="flex items-center gap-3">
-                    <div className={`rounded-2xl bg-gradient-to-br ${agent.color} p-3`}>
+                    <div className={`rounded-2xl bg-gradient-to-br ${tool.color} p-3`}>
                       <Icon className="size-6 text-white" />
                     </div>
-                    <h3 className="text-xl font-black">{agent.title}</h3>
+                    <h3 className="text-xl font-black">{tool.title}</h3>
                   </div>
-                  <p className="mt-4 text-sm leading-6 text-slate-600 dark:text-slate-300">{agent.description}</p>
-                  <span className="mt-4 inline-flex items-center gap-2 text-sm font-black text-brand-700 dark:text-cyan-300">
-                    Open {agent.title} <Bot className="size-4" />
-                  </span>
+                  <p className="mt-4 text-sm leading-6 text-slate-600 dark:text-slate-300">{tool.description}</p>
                 </div>
               </Link>
             );
@@ -93,26 +62,7 @@ export default function AIClassroomPage() {
         </div>
       </Section>
 
-      <Section eyebrow="Learning Tools" title="Study tools powered by AI" copy="Generate study materials from any lesson automatically — quizzes, flashcards, notes, diagrams, and more." className="bg-white/55 dark:bg-slate-900/35">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {tools.map((tool) => {
-            const Icon = tool.icon;
-            return (
-              <Link
-                key={tool.title}
-                href={tool.href}
-                className="group rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-1 hover:border-brand-500 hover:shadow-lg hover:shadow-cyan-100 dark:border-slate-800 dark:bg-slate-900 dark:hover:shadow-black/20"
-              >
-                <Icon className="size-7 text-brand-600" />
-                <h3 className="mt-4 text-lg font-black">{tool.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">{tool.description}</p>
-              </Link>
-            );
-          })}
-        </div>
-      </Section>
-
-      <Section eyebrow="AI Courses" title="Learn any course with AI guidance" copy="Open a course in AI Classroom mode. Your AI teacher will guide you through every chapter.">
+      <Section eyebrow="AI Courses" title="Learn any course with AI guidance" copy="Open a course in AI Classroom mode. Your AI teacher will guide you through every chapter." className="bg-white/55 dark:bg-slate-900/35">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {aiCourses.map((course) => (
             <Link
