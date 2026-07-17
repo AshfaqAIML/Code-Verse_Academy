@@ -11,8 +11,13 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.15",
+    "@ai-sdk/deepseek": "^3.0.11",
+    "@ai-sdk/google": "^4.0.17",
+    "@ai-sdk/openai": "^4.0.15",
     "@monaco-editor/react": "^4.7.0",
     "@react-oauth/google": "^0.13.5",
+    "ai": "^7.0.29",
     "bcryptjs": "^2.4.3",
     "chart.js": "^4.4.7",
     "concurrently": "^9.1.2",

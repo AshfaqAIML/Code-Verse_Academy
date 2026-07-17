@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Loader2, Bot, GraduationCap, BrainCircuit, Users } from "lucide-react";
+import { Send, Loader2, Bot, GraduationCap, BrainCircuit, Users, Trash2 } from "lucide-react";
 import type { ChatMessage, ChatRequest } from "@/lib/ai-classroom/types";
 import { getAgent } from "@/lib/ai-classroom/agents";
+import { useChatHistory } from "@/lib/ai-classroom/use-chat-history";
 
 const iconMap: Record<string, typeof Bot> = { Bot, GraduationCap, BrainCircuit, Users };
 
@@ -15,7 +16,7 @@ type Props = {
 };
 
 export function ChatPanel({ agentId, topic, chapterContent, placeholder }: Props) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const { messages, setMessages, clearMessages } = useChatHistory<ChatMessage>(`cv-chat-${agentId}`);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [currentStream, setCurrentStream] = useState("");
@@ -74,8 +75,11 @@ export function ChatPanel({ agentId, topic, chapterContent, placeholder }: Props
           if (data === "[DONE]") continue;
           try {
             const parsed = JSON.parse(data);
-            if (parsed.content) {
-              setCurrentStream((prev) => prev + parsed.content);
+            const content = parsed.type === "text_delta"
+              ? parsed.data?.content
+              : parsed.content;
+            if (content) {
+              setCurrentStream((prev) => prev + content);
             }
           } catch { /* skip malformed chunks */ }
         }
@@ -102,14 +106,21 @@ export function ChatPanel({ agentId, topic, chapterContent, placeholder }: Props
   return (
     <div className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
       <div className={`rounded-t-2xl bg-gradient-to-r ${agent.color} px-5 py-4`}>
-        <div className="flex items-center gap-3">
-          <div className="rounded-xl bg-white/20 p-2 backdrop-blur">
-            <Icon className="size-5 text-white" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="rounded-xl bg-white/20 p-2 backdrop-blur">
+              <Icon className="size-5 text-white" />
+            </div>
+            <div>
+              <h3 className="font-black text-white">{agent.name}</h3>
+              <p className="text-xs font-semibold text-white/80">{agent.role.charAt(0).toUpperCase() + agent.role.slice(1)}</p>
+            </div>
           </div>
-          <div>
-            <h3 className="font-black text-white">{agent.name}</h3>
-            <p className="text-xs font-semibold text-white/80">{agent.role.charAt(0).toUpperCase() + agent.role.slice(1)}</p>
-          </div>
+          {messages.length > 0 && (
+            <button onClick={clearMessages} className="flex items-center gap-1 rounded-xl bg-white/20 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur transition hover:bg-white/30" title="Clear chat">
+              <Trash2 className="size-3" /> Clear
+            </button>
+          )}
         </div>
       </div>
 
