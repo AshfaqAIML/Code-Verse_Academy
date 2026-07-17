@@ -15,7 +15,12 @@ function readPracticeMemory(): { completed: string[]; practiceDates: string[] } 
   if (!storage) return { completed: [], practiceDates: [] };
   try {
     const raw = storage.getItem("codeverse-practice-memory");
-    return raw ? JSON.parse(raw) : { completed: [], practiceDates: [] };
+    if (!raw) return { completed: [], practiceDates: [] };
+    const parsed = JSON.parse(raw);
+    return {
+      completed: Array.isArray(parsed.completed) ? parsed.completed : [],
+      practiceDates: Array.isArray(parsed.practiceDates) ? parsed.practiceDates : [],
+    };
   } catch {
     return { completed: [], practiceDates: [] };
   }

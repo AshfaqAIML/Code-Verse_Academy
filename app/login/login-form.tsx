@@ -34,11 +34,12 @@ function doLogin(token: string, user: { name: string; email: string; role: strin
     const raw = window.localStorage.getItem("codeverse-practice-memory");
     const memory = raw ? JSON.parse(raw) : {};
     const practiceDates = Array.isArray(memory.practiceDates) ? memory.practiceDates : [];
+    const completed = Array.isArray(memory.completed) ? memory.completed : [];
     const today = dateKey(new Date());
     if (!practiceDates.includes(today)) {
       practiceDates.push(today);
     }
-    window.localStorage.setItem("codeverse-practice-memory", JSON.stringify({ ...memory, practiceDates }));
+    window.localStorage.setItem("codeverse-practice-memory", JSON.stringify({ completed, practiceDates }));
   } catch { /* localStorage unavailable */ }
   window.dispatchEvent(new Event("codeverse-auth"));
   fetch("/api/auth/streak", { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }).catch(() => {});
