@@ -1,5 +1,5 @@
 import { Section } from "@/components/section";
-import { Bot, BrainCircuit, GraduationCap, Users, Sparkles, NotebookTabs, ListChecks, BookOpen, Mic, PenLine, Code2, ArrowRight, MessageSquareMore } from "lucide-react";
+import { Bot, BrainCircuit, GraduationCap, Users, Sparkles, NotebookTabs, ListChecks, BookOpen, Mic, PenLine, Code2, ArrowRight, MessageSquareMore, Monitor, Play } from "lucide-react";
 import Link from "next/link";
 import { getAICourses } from "@/lib/ai-classroom/courses";
 
@@ -35,6 +35,33 @@ export default function AIClassroomPage() {
           </div>
         </div>
       </section>
+
+      <Section eyebrow="AI Classroom" title="Interactive AI-Powered Lessons" copy="Enter any topic and get a full interactive lesson with slides, quizzes, and AI classmates discussing together.">
+        <Link
+          href="/ai-classroom/learn"
+          className="group mb-8 block overflow-hidden rounded-3xl border-2 border-brand-200 bg-gradient-to-br from-brand-50 via-white to-purple-50 transition hover:-translate-y-1 hover:border-brand-500 hover:shadow-xl dark:border-brand-900 dark:from-brand-950/30 dark:via-slate-900 dark:to-purple-950/20 dark:hover:border-brand-600"
+        >
+          <div className="flex items-center gap-6 p-6 sm:p-8">
+            <div className="hidden shrink-0 sm:block">
+              <div className="flex size-20 items-center justify-center rounded-3xl bg-gradient-to-br from-brand-500 to-purple-600 shadow-lg">
+                <Monitor className="size-10 text-white" />
+              </div>
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-3">
+                <span className="rounded-full bg-brand-600 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-white">New</span>
+                <h3 className="text-2xl font-black text-ink dark:text-white">Start a Lesson</h3>
+              </div>
+              <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                Enter any topic — AI generates a structured lesson with slides, a quiz, and a multi-agent discussion. Like a real classroom, but AI-powered.
+              </p>
+              <span className="mt-4 inline-flex items-center gap-2 text-sm font-black text-brand-700 dark:text-cyan-300">
+                Try it now <Play className="size-4 transition group-hover:translate-x-1" />
+              </span>
+            </div>
+          </div>
+        </Link>
+      </Section>
 
       <Section eyebrow="Learning Tools" title="Everything you need to learn" copy="AI-powered study tools that work with any lesson content. Generate, practice, review, and master any topic.">
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
