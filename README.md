@@ -59,7 +59,6 @@ GITHUB_CLIENT_ID=...
 
 ```
 app/                    Next.js App Router pages and routes
-  ai-classroom/         AI-powered learning tools (7 tools)
   api/                  API route handlers
   blog/                 Blog index and articles
   courses/              Course grid and tracks
@@ -77,7 +76,7 @@ app/                    Next.js App Router pages and routes
 components/             Shared UI and feature-specific components
 data/                   Generated content: books, blogs, CSV samples
 docs/                   Architecture and design notes
-lib/                    Shared logic, content helpers, AI classroom modules
+lib/                    Shared logic, content helpers
 server/                 Express API scaffold
 scripts/                Content extraction utilities
 playground/             Standalone sandbox (separate Vite + Express app)
@@ -85,51 +84,6 @@ playground/             Standalone sandbox (separate Vite + Express app)
 
 ---
 
-## AI Classroom — 7 Learning Tools
-
-The AI Classroom (`/ai-classroom`) is the platform's AI-powered learning suite. Each tool lives in `app/ai-classroom/<tool>/` and is backed by a shared LLM layer in `lib/ai-classroom/`.
-
-### Tools
-
-| Tool | Route | Description |
-|------|-------|-------------|
-| **Smart Quiz** | `/ai-classroom/quiz` | AI-generated quizzes from lesson content. Timer, difficulty selector, progress bar, skip questions, detailed scoring |
-| **Flashcards** | `/ai-classroom/flashcards` | AI-generated flashcards with 3D CSS flip animation, keyboard nav (← → Space), shuffle, progress tracking |
-| **Voice Learning** | `/ai-classroom/voice` | Speech recognition + synthesis in 7 languages. Click-to-speak, transcript preview, read-aloud |
-| **AI Notes** | `/ai-classroom/notes` | Structured notes with localStorage persistence, search, AI generation from content, word count, duplicate |
-| **Code Mentor** | `/ai-classroom/code-mentor` | Review/Debug/Optimize/Explain modes. Paste code, get AI analysis, ask follow-ups |
-| **AI Whiteboard** | `/ai-classroom/whiteboard` | HTML5 Canvas drawing board. Pen, shapes, text, eraser, fill color, undo/redo, download PNG |
-| **AI Classmates** | `/ai-classroom/classmates` | Multi-agent group discussion. Beginner/Intermediate/Advanced AI peers discuss together via SSE streaming |
-
-### AI Backend Architecture
-
-```
-lib/ai-classroom/
-  providers.ts          -- Multi-provider LLM factory (OpenAI, Anthropic, Google, DeepSeek)
-  llm.ts                -- streamAI / callAI helpers
-  types.ts              -- Shared types (ChatMessage, ChatRequest, SSEEvent, DirectorState)
-  use-chat-history.ts   -- Generic localStorage hook for chat persistence
-  agents.ts             -- Agent definitions (teacher, assistant, classmates)
-  generation/
-    types.ts            -- QuizContent, Flashcard, GenerationRequest types
-    outline-generator.ts-- Chapter outline generation
-    content-generator.ts-- Quiz and flashcard content generation
-  orchestration/
-    prompt-builder.ts   -- System prompts for multi-agent discussions
-    director.ts         -- Director loop: cycles agents via LLM decisions with SSE streaming
-
-app/api/ai-classroom/
-  chat/route.ts         -- POST handler: single-agent or multi-agent chat with SSE
-  generate/route.ts     -- POST handler: generate outlines, quizzes, flashcards
-```
-
-### Key design decisions
-
-- **Multi-provider**: Supports 4 LLM providers via environment variables. Default: `openai` / `gpt-4o-mini`. Set `AI_PROVIDER` and `AI_MODEL` in env.
-- **SSE streaming**: All AI responses stream via Server-Sent Events for real-time UI updates.
-- **Multi-agent orchestration**: Lightweight director loop (no LangGraph dependency) — agents take turns based on LLM director decisions.
-- **localStorage persistence**: Chat history is saved per page via the `useChatHistory` hook. Clear buttons provided on each surface.
-- **No UI framework**: All tools use Tailwind CSS with custom components to match the platform's design language.
 
 ---
 
@@ -165,8 +119,7 @@ app/api/ai-classroom/
 | `/api/certificates` | GET, POST | Certificate management |
 | `/api/ai/revision` | POST | AI revision assistant |
 | `/api/revision/history` | POST | Revision history |
-| `/api/ai-classroom/chat` | POST | Single-agent / multi-agent chat (SSE) |
-| `/api/ai-classroom/generate` | POST | Generate outlines, quizzes, flashcards |
+
 
 ---
 
@@ -220,8 +173,7 @@ All shared UI components live in `components/`:
 | `charts.tsx` | Dashboard charts |
 | `certificates/certificate-studio.tsx` | Certificate designer |
 | `revision/*` | AI revision assistant and center |
-| `ai-classroom/chat-panel.tsx` | Reusable single-agent chat panel |
-| `ai-classroom/classmates-page.tsx` | Multi-agent group discussion |
+
 
 ---
 
@@ -233,7 +185,6 @@ All shared UI components live in `components/`:
 | New reusable UI | `components/<feature>/...` |
 | New API endpoint | `app/api/<feature>/route.ts` |
 | New shared logic | `lib/<feature>.ts` |
-| New AI tool | `app/ai-classroom/<tool>/page.tsx` + helpers in `lib/ai-classroom/` |
 | New backend service | `server/` |
 | New content extractor | `scripts/` |
 | New static content | `data/` |
