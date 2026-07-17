@@ -54,14 +54,14 @@ export type LibraryBook = Omit<LibraryBookSummary, "chapters"> & {
 
 const booksDir = path.join(process.cwd(), "data", "books");
 const preferredBookOrder = new Map([
-  ["html-foundations", 0],
-  ["css-design-systems", 1],
-  ["javascript-mastery", 2],
-  ["advanced-backend-and-system-design", 3],
-  ["backend-development-and-databases", 4],
-  ["backend-developer-interview-mastery", 5],
-  ["backend-engineering-to-ai-systems", 6],
-  ["python-backend-foundation", 7],
+  ["python-backend-foundation", 0],
+  ["backend-development-and-databases", 1],
+  ["advanced-backend-and-system-design", 2],
+  ["html-foundations", 3],
+  ["css-design-systems", 4],
+  ["javascript-mastery", 5],
+  ["backend-developer-interview-mastery", 6],
+  ["backend-engineering-to-ai-systems", 7],
   ["python-backend-development", 8],
   ["python-engineering", 9],
   ["python-dsa", 10],
