@@ -110,8 +110,7 @@ export function TutorialBookGrid({ books }: TutorialBookGridProps) {
                   <div className="absolute bottom-4 left-4 right-4">
                     <div className="flex items-end justify-between gap-2">
                       <div className="min-w-0 flex-1">
-                        <p className="text-[11px] font-black uppercase tracking-[0.3em] text-white/70">Volume</p>
-                        <h3 className="mt-2 text-xl font-black tracking-tight text-white">{book.title}</h3>
+                        <h3 className="text-xl font-black tracking-tight text-white">{book.title}</h3>
                       </div>
                       <div className="shrink-0 rounded-2xl border border-white/20 bg-white/10 px-2.5 py-1.5 text-right backdrop-blur">
                         <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${theme.accent}`}>{book.level}</p>
