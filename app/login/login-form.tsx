@@ -23,9 +23,23 @@ type Props = {
   nextPath: string;
 };
 
+function dateKey(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 function doLogin(token: string, user: { name: string; email: string; role: string }, router: ReturnType<typeof useRouter>, nextPath: string) {
   window.localStorage.setItem("codeverse-token", token);
   window.localStorage.setItem("codeverse-user", JSON.stringify(user));
+  try {
+    const raw = window.localStorage.getItem("codeverse-practice-memory");
+    const memory = raw ? JSON.parse(raw) : {};
+    const practiceDates = Array.isArray(memory.practiceDates) ? memory.practiceDates : [];
+    const today = dateKey(new Date());
+    if (!practiceDates.includes(today)) {
+      practiceDates.push(today);
+    }
+    window.localStorage.setItem("codeverse-practice-memory", JSON.stringify({ ...memory, practiceDates }));
+  } catch { /* localStorage unavailable */ }
   window.dispatchEvent(new Event("codeverse-auth"));
   fetch("/api/auth/streak", { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }).catch(() => {});
   router.push(nextPath);

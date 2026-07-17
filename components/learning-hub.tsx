@@ -205,14 +205,16 @@ export function LearningHub({ books }: Props) {
   );
 }
 
+function dateKey(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 function calculateStreak(practiceDates: string[]) {
   const dates = new Set(practiceDates);
   let streak = 0;
   const cursor = new Date();
 
-  while (streak < 365) {
-    const key = cursor.toISOString().slice(0, 10);
-    if (!dates.has(key)) break;
+  while (dates.has(dateKey(cursor))) {
     streak += 1;
     cursor.setDate(cursor.getDate() - 1);
   }
