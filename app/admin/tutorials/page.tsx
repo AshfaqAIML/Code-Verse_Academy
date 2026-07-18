@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Pencil, Trash2, ExternalLink, Database, AlertCircle } from "lucide-react";
+import { Plus, Pencil, Trash2, ExternalLink, AlertCircle } from "lucide-react";
 import { Section } from "@/components/section";
 
 type TutorialSummary = {
@@ -19,7 +19,6 @@ export default function AdminTutorialsPage() {
   const [tutorials, setTutorials] = useState<TutorialSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [migrating, setMigrating] = useState(false);
 
   async function fetchTutorials() {
     setLoading(true);
@@ -56,29 +55,6 @@ export default function AdminTutorialsPage() {
     }
   }
 
-  async function handleMigrate() {
-    if (!confirm("Import existing tutorial content from the codebase?")) return;
-    setMigrating(true);
-    try {
-      const token = localStorage.getItem("codeverse-token");
-      const res = await fetch("/api/admin/migrate", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "tutorials" }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: res.statusText }));
-        throw new Error(err.error || `Migration failed (${res.status})`);
-      }
-      alert("Migration complete! Refreshing list...");
-      fetchTutorials();
-    } catch (e) {
-      alert(String(e));
-    } finally {
-      setMigrating(false);
-    }
-  }
-
   return (
     <Section
       eyebrow="Content management"
@@ -91,14 +67,6 @@ export default function AdminTutorialsPage() {
           className="inline-flex items-center gap-2 rounded-xl bg-ink px-4 py-2.5 text-sm font-bold text-white transition hover:-translate-y-0.5 dark:bg-white dark:text-ink"
         >
           <Plus className="size-4" /> New tutorial
-        </button>
-        <button
-          onClick={handleMigrate}
-          disabled={migrating}
-          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:-translate-y-0.5 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
-        >
-          <Database className="size-4" />
-          {migrating ? "Importing..." : "Import from codebase"}
         </button>
       </div>
 
@@ -115,7 +83,7 @@ export default function AdminTutorialsPage() {
       ) : tutorials.length === 0 ? (
         <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center dark:border-slate-800 dark:bg-slate-900">
           <p className="text-sm text-slate-500 dark:text-slate-400">No tutorials found.</p>
-          <p className="mt-1 text-xs text-slate-400">Click &ldquo;Import from codebase&rdquo; to load existing content, or &ldquo;New tutorial&rdquo; to create one.</p>
+          <p className="mt-1 text-xs text-slate-400">Click &ldquo;New tutorial&rdquo; to create one.</p>
         </div>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
