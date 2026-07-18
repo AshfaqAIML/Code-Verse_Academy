@@ -53,6 +53,16 @@ export function TutorialReader({ book, chapter, previous, next, headings, revisi
   const [searchTerm, setSearchTerm] = useState("");
   const [progressPercent, setProgressPercent] = useState(Math.round((chapter.number / Math.max(book.chapters.length, 1)) * 100));
   const [bookmarked, setBookmarked] = useState(false);
+  const [editedBlocks, setEditedBlocks] = useState<LibraryBookBlock[] | null>(null);
+
+  useEffect(() => {
+    fetch(`/api/admin/books/${book.slug}/chapters/${chapter.number}`)
+      .then((r) => r.json())
+      .then((data) => { if (data.edited) setEditedBlocks(data.blocks); })
+      .catch(() => {});
+  }, [book.slug, chapter.number]);
+
+  const blocks = editedBlocks ?? chapter.blocks;
 
   const readerGrid = wideRead
     ? "xl:grid-cols-[minmax(0,1fr)]"
@@ -101,14 +111,14 @@ export function TutorialReader({ book, chapter, previous, next, headings, revisi
   }, [book.slug, book.chapters.length, chapter.slug, chapter.number]);
 
   const readingTime = useMemo(() => {
-    const wordCount = chapter.blocks
+    const wordCount = blocks
       .map((block) => block.text)
       .join(" ")
       .trim()
       .split(/\s+/)
       .filter(Boolean).length;
     return Math.max(3, Math.ceil(wordCount / 180));
-  }, [chapter.blocks]);
+  }, [blocks]);
 
   const activeChapterLabel = useMemo(() => `Lesson ${chapter.number}: ${chapter.title}`, [chapter.number, chapter.title]);
   const filteredHeadings = useMemo(() => {
@@ -197,7 +207,7 @@ export function TutorialReader({ book, chapter, previous, next, headings, revisi
                 <BookOpen className="size-4" /> {book.category}
               </span>
               <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-600 dark:bg-slate-950 dark:text-slate-300">
-                {chapter.blocks.length} blocks
+                {blocks.length} blocks
               </span>
               <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-600 dark:bg-slate-950 dark:text-slate-300">
                 {activeChapterLabel}
@@ -247,12 +257,12 @@ export function TutorialReader({ book, chapter, previous, next, headings, revisi
             />
 
             <div className="mt-8">
-              {chapter.blocks.length === 0 ? (
+              {blocks.length === 0 ? (
                 <p className="rounded-2xl bg-amber-50 p-5 font-semibold text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
                   This chapter title exists in the document, but no body text was available in the extracted DOCX stream.
                 </p>
               ) : (
-                chapter.blocks.map((block, index) => <TutorialBlock key={`${block.type}-${index}`} block={block} id={`section-${index}`} />)
+                blocks.map((block, index) => <TutorialBlock key={`${block.type}-${index}`} block={block} id={`section-${index}`} />)
               )}
             </div>
           </div>
