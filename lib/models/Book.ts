@@ -88,6 +88,6 @@ const BookSchema = new Schema<IBook>({
   chapters: [BookChapterSchema],
   parts: [BookPartSchema],
   coverTheme: String,
-}, { timestamps: true });
+}, { timestamps: true, strict: false });
 
 export const Book = mongoose.models.Book || mongoose.model<IBook>("Book", BookSchema);
