@@ -1,8 +1,12 @@
+import fs from "node:fs";
+import path from "node:path";
 import { Model } from "mongoose";
 import { connectDB } from "./db";
 import { Tutorial } from "./models/Tutorial";
 import { Blog } from "./models/Blog";
 import { Book } from "./models/Book";
+
+const STORE_DIR = path.join(process.cwd(), "data", "admin");
 
 const models: Record<string, Model<any>> = {
   tutorials: Tutorial,
@@ -10,11 +14,22 @@ const models: Record<string, Model<any>> = {
   books: Book,
 };
 
+function readFromFile<T>(name: string): T[] {
+  const fp = path.join(STORE_DIR, `${name}.json`);
+  if (!fs.existsSync(fp)) return [];
+  return JSON.parse(fs.readFileSync(fp, "utf8"));
+}
+
 export async function readCollection<T>(name: string): Promise<T[]> {
-  await connectDB();
-  const model = models[name];
-  if (!model) return [];
-  return model.find({}).lean() as unknown as T[];
+  try {
+    await connectDB();
+    const model = models[name];
+    if (!model) return readFromFile<T>(name);
+    const results = await model.find({}).lean();
+    return results as unknown as T[];
+  } catch {
+    return readFromFile<T>(name);
+  }
 }
 
 export async function writeCollection<T>(name: string, data: T[]) {
@@ -31,10 +46,15 @@ export async function findOne<T extends { slug: string }>(
   name: string,
   slug: string
 ): Promise<T | null> {
-  await connectDB();
-  const model = models[name];
-  if (!model) return null;
-  return model.findOne({ slug }).lean() as unknown as T | null;
+  try {
+    await connectDB();
+    const model = models[name];
+    if (!model) return null;
+    return model.findOne({ slug }).lean() as unknown as T | null;
+  } catch {
+    const items = readFromFile<T>(name);
+    return items.find((i) => i.slug === slug) ?? null;
+  }
 }
 
 export async function upsertOne<T extends { slug: string; [key: string]: unknown }>(

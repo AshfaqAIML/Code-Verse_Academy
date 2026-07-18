@@ -8,7 +8,10 @@ const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/codeve
 
 export async function connectDB() {
   if (globalThis.__mongoose) return globalThis.__mongoose;
-  const conn = await mongoose.connect(MONGODB_URI);
+  const conn = await mongoose.connect(MONGODB_URI, {
+    serverSelectionTimeoutMS: 5000,
+    connectTimeoutMS: 5000,
+  });
   globalThis.__mongoose = conn;
   return conn;
 }
