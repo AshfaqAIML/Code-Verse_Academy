@@ -36,6 +36,6 @@ const BlogSchema = new Schema<IBlog>({
   readingTime: { type: Number, default: 0 },
   blocks: { type: [BlogBlockSchema], default: [] },
   published: { type: Boolean, default: true },
-}, { timestamps: true });
+}, { timestamps: true, strict: false });
 
 export const Blog = mongoose.models.Blog || mongoose.model<IBlog>("Blog", BlogSchema);

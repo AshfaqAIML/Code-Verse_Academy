@@ -33,13 +33,13 @@ export async function POST(request: NextRequest) {
     const tutorials = Object.entries(tutorialContent).map(([slug, content]) =>
       mergeCourseData(slug, content as Record<string, unknown>)
     );
-    writeCollection("tutorials", tutorials);
+    await writeCollection("tutorials", tutorials);
     results.tutorials = tutorials.length;
   }
 
   if (type === "all" || type === "blogs") {
     const blogs = blogData.articles.map((a) => ({ ...a, published: true }));
-    writeCollection("blogs", blogs);
+    await writeCollection("blogs", blogs);
     results.blogs = blogs.length;
   }
 

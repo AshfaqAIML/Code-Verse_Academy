@@ -1,49 +1,59 @@
-import fs from "node:fs";
-import path from "node:path";
+import { Model } from "mongoose";
+import { connectDB } from "./db";
+import { Tutorial } from "./models/Tutorial";
+import { Blog } from "./models/Blog";
+import { Book } from "./models/Book";
 
-const STORE_DIR = path.join(process.cwd(), "data", "admin");
+const models: Record<string, Model<any>> = {
+  tutorials: Tutorial,
+  blogs: Blog,
+  books: Book,
+};
 
-function ensureDir() {
-  if (!fs.existsSync(STORE_DIR)) {
-    fs.mkdirSync(STORE_DIR, { recursive: true });
+export async function readCollection<T>(name: string): Promise<T[]> {
+  await connectDB();
+  const model = models[name];
+  if (!model) return [];
+  return model.find({}).lean() as unknown as T[];
+}
+
+export async function writeCollection<T>(name: string, data: T[]) {
+  await connectDB();
+  const model = models[name];
+  if (!model) throw new Error(`Unknown collection: ${name}`);
+  await model.deleteMany({});
+  if (data.length > 0) {
+    await model.insertMany(data);
   }
 }
 
-export function readCollection<T>(name: string): T[] {
-  ensureDir();
-  const fp = path.join(STORE_DIR, `${name}.json`);
-  if (!fs.existsSync(fp)) return [];
-  return JSON.parse(fs.readFileSync(fp, "utf8"));
+export async function findOne<T extends { slug: string }>(
+  name: string,
+  slug: string
+): Promise<T | null> {
+  await connectDB();
+  const model = models[name];
+  if (!model) return null;
+  return model.findOne({ slug }).lean() as unknown as T | null;
 }
 
-export function writeCollection<T>(name: string, data: T[]) {
-  ensureDir();
-  const fp = path.join(STORE_DIR, `${name}.json`);
-  fs.writeFileSync(fp, JSON.stringify(data, null, 2), "utf8");
+export async function upsertOne<T extends { slug: string; [key: string]: unknown }>(
+  name: string,
+  item: T
+): Promise<T> {
+  await connectDB();
+  const model = models[name];
+  if (!model) throw new Error(`Unknown collection: ${name}`);
+  const result = await model
+    .findOneAndUpdate({ slug: item.slug }, { $set: item }, { upsert: true, new: true })
+    .lean();
+  return result as unknown as T;
 }
 
-export function findOne<T extends { slug: string }>(name: string, slug: string): T | null {
-  const items = readCollection<T>(name);
-  return items.find((i) => i.slug === slug) ?? null;
-}
-
-export function upsertOne<T extends { slug: string; [key: string]: unknown }>(name: string, item: T): T {
-  const items = readCollection<T>(name);
-  const idx = items.findIndex((i) => i.slug === item.slug);
-  if (idx >= 0) {
-    items[idx] = { ...items[idx], ...item, updatedAt: new Date().toISOString() };
-  } else {
-    items.push({ ...item, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
-  }
-  writeCollection(name, items);
-  return item;
-}
-
-export function deleteOne(name: string, slug: string): boolean {
-  const items = readCollection(name);
-  const idx = items.findIndex((i) => (i as { slug: string }).slug === slug);
-  if (idx < 0) return false;
-  items.splice(idx, 1);
-  writeCollection(name, items);
-  return true;
+export async function deleteOne(name: string, slug: string): Promise<boolean> {
+  await connectDB();
+  const model = models[name];
+  if (!model) return false;
+  const { deletedCount } = await model.deleteOne({ slug });
+  return (deletedCount ?? 0) > 0;
 }

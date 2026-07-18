@@ -7,7 +7,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (authError) return authError;
 
   const { slug } = await params;
-  const tutorials = readCollection("tutorials");
+  const tutorials = await readCollection("tutorials");
   const tutorial = tutorials.find((t) => (t as { slug: string }).slug === slug) ?? null;
   if (!tutorial) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -22,7 +22,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const { slug } = await params;
     const body = await request.json();
-    const tutorial = upsertOne("tutorials", { ...body, slug });
+    const tutorial = await upsertOne("tutorials", { ...body, slug });
     return NextResponse.json({ tutorial });
   } catch (error) {
     return NextResponse.json({ error: String(error) }, { status: 400 });
@@ -34,7 +34,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   if (authError) return authError;
 
   const { slug } = await params;
-  const deleted = deleteOne("tutorials", slug);
+  const deleted = await deleteOne("tutorials", slug);
   if (!deleted) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }

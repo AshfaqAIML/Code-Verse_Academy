@@ -68,6 +68,6 @@ const TutorialSchema = new Schema<ITutorial>({
   quiz: { type: [TutorialQuizSchema], default: [] },
   outline: [TutorialOutlineSchema],
   color: String,
-}, { timestamps: true });
+}, { timestamps: true, strict: false });
 
 export const Tutorial = mongoose.models.Tutorial || mongoose.model<ITutorial>("Tutorial", TutorialSchema);
