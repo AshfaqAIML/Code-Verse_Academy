@@ -477,6 +477,14 @@ export const tutorialTracks = [
     text: "Learn models, training, evaluation and AI projects with easy visuals.",
     topics: ["AI roadmap", "ML", "Deep learning", "Models", "Datasets", "Projects"],
     icon: BrainCircuit
+  },
+  {
+    title: "Machine Learning Foundations",
+    slug: "machine-learning-foundations",
+    level: "Book 1",
+    text: "Build strong ML foundations with supervised and unsupervised learning, model evaluation, and real-world workflows.",
+    topics: ["ML basics", "Supervised learning", "Unsupervised learning", "Model eval", "Workflows", "Projects"],
+    icon: BrainCircuit
   }
 ];
 

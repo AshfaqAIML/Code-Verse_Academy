@@ -71,7 +71,8 @@ const preferredBookOrder = new Map([
   ["javascript-web-development-master-book", 14],
   ["ai-ml-handbook-volume-1", 15],
   ["ai-ml-handbook-volume-2", 16],
-  ["aiml-engineer", 17]
+  ["aiml-engineer", 17],
+  ["machine-learning-foundations", 18]
 ]);
 
 function sortBooksByLearningOrder<T extends { slug: string; title: string }>(books: T[]) {

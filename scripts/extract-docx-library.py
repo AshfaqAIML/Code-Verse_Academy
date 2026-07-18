@@ -22,9 +22,10 @@ BOOKS = [
     "BOOK 2 Backend Development & Databases.docx",
     "BOOK 3 Advanced Backend & System Design.docx",
     "Python for Backend Development.docx",
-    "Python Mastery.docx",
+    "Python Engineering.docx",
     "Backend Engineering to AI Systems.docx",
     "PYTHON DSA.docx",
+    "Machine Learning Foundations.docx",
 ]
 
 BOOK_META = {
@@ -91,7 +92,7 @@ BOOK_META = {
         "level": "Complete Book",
         "description": "Build production-ready Python backends with FastAPI, databases, auth, testing, Docker and deployment.",
     },
-    "Python Mastery.docx": {
+    "Python Engineering.docx": {
         "slug": "python-engineering",
         "title": "Python Mastery",
         "category": "Programming",
@@ -111,6 +112,13 @@ BOOK_META = {
         "category": "DSA",
         "level": "Practice Book",
         "description": "Learn data structures and algorithms using Python with topic-wise explanations and practice.",
+    },
+    "Machine Learning Foundations.docx": {
+        "slug": "machine-learning-foundations",
+        "title": "Machine Learning Foundations",
+        "category": "AI/ML",
+        "level": "Book 1",
+        "description": "Build strong ML foundations with supervised and unsupervised learning, model evaluation, and real-world workflows.",
     },
 }
 
