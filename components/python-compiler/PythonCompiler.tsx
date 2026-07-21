@@ -22,6 +22,7 @@ type Step = {
   locals: Record<string, VarInfo>;
   funcName: string;
   funcFrame: string;
+  stdout: string;
 };
 
 type TraceResult = {
@@ -153,13 +154,17 @@ def _desc(v, depth=0):
     return {"kind": type(v).__name__, "value": repr(v)[:80]}
 
 def _snap(frame):
-    step = {"line": frame.f_lineno, "locals": {}, "funcName": frame.f_code.co_name, "funcFrame": frame.f_code.co_name or "Global"}
+    step = {"line": frame.f_lineno, "locals": {}, "funcName": frame.f_code.co_name, "funcFrame": frame.f_code.co_name or "Global", "stdout": ""}
     for k, v in frame.f_locals.items():
         if not k.startswith("_"):
             try:
                 step["locals"][k] = _desc(v)
             except:
                 step["locals"][k] = {"kind": "error", "value": "?"}
+    try:
+        step["stdout"] = sys.stdout.getvalue()
+    except:
+        pass
     return step
 
 class _T:
@@ -715,12 +720,12 @@ sys.stdout = _saved_out
                 <path d="M4 17V4h16v13" /><path d="M4 17h16v4H4z" />
               </svg>
               <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Print Output</span>
-              {trace?.stdout && (
-                <span className="ml-auto text-[11px] text-slate-400">{trace.stdout.split("\n").length} lines</span>
+              {currentStep?.stdout && (
+                <span className="ml-auto text-[11px] text-slate-400">{currentStep.stdout.split("\n").length} lines</span>
               )}
             </div>
             <div className="max-h-[140px] overflow-auto bg-slate-950 p-3 font-mono text-sm leading-relaxed text-green-400">
-              <pre className="whitespace-pre-wrap">{trace ? (trace.stdout || "(no output)") : output}</pre>
+              <pre className="whitespace-pre-wrap">{trace ? (currentStep?.stdout || "(no output yet)") : output}</pre>
             </div>
           </div>
 
