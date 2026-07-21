@@ -15,6 +15,7 @@ type HeapObject = {
   items?: VarInfo[];
   pairs?: { key: VarInfo; val: VarInfo }[];
   length: number;
+  repr?: string;
 };
 
 type Step = {
@@ -114,6 +115,20 @@ m = build_matrix(3, 4)
 for row in m:
     print(row)`,
   },
+  {
+    label: "Factorial Sum",
+    code: `n = 5
+result = 0.0
+fact = 1
+
+for i in range(1, n + 1):
+    fact = fact * i
+    result = result + i / fact
+
+print("n =", n)
+print("Series sum =", result)
+print("Expected  : 1/1! + 2/2! + 3/3! + 4/4! + 5/5!")`,
+  },
 ];
 
 // ─── Injected Python Tracer ───────────────────────────────────────────
@@ -136,12 +151,12 @@ def _desc(v, depth=0):
     if isinstance(v, list):
         oid = "oid_" + str(id(v))
         if oid not in _trace["heap"]:
-            _trace["heap"][oid] = {"type": "list", "items": [_desc(x, depth+1) for x in v], "length": len(v)}
+            _trace["heap"][oid] = {"type": "list", "items": [_desc(x, depth+1) for x in v], "length": len(v), "repr": repr(v)[:200]}
         return {"kind": "ref", "oid": oid}
     if isinstance(v, tuple):
         oid = "oid_" + str(id(v))
         if oid not in _trace["heap"]:
-            _trace["heap"][oid] = {"type": "tuple", "items": [_desc(x, depth+1) for x in v], "length": len(v)}
+            _trace["heap"][oid] = {"type": "tuple", "items": [_desc(x, depth+1) for x in v], "length": len(v), "repr": repr(v)[:200]}
         return {"kind": "ref", "oid": oid}
     if isinstance(v, dict):
         oid = "oid_" + str(id(v))
@@ -149,7 +164,7 @@ def _desc(v, depth=0):
             pairs = []
             for k, val in list(v.items())[:12]:
                 pairs.append({"key": _desc(k, depth+1), "val": _desc(val, depth+1)})
-            _trace["heap"][oid] = {"type": "dict", "pairs": pairs, "length": len(v)}
+            _trace["heap"][oid] = {"type": "dict", "pairs": pairs, "length": len(v), "repr": repr(v)[:200]}
         return {"kind": "ref", "oid": oid}
     return {"kind": type(v).__name__, "value": repr(v)[:80]}
 
@@ -334,19 +349,38 @@ sys.stdout = _saved_out
 
   // ─── Renderers ──────────────────────────────────────────────────────
 
-  const renderInlineVal = (v: VarInfo | undefined) => {
+  const renderInlineVal = (v: VarInfo | undefined, showRepr = false) => {
     if (!v) return <span className="text-slate-400">—</span>;
     if (v.kind === "literal") {
       const val = (v as LiteralVal).value;
-      if (val === "True" || val === "False") return <span className="text-amber-600 dark:text-amber-400">{val}</span>;
-      if (val === "None") return <span className="text-slate-400">None</span>;
+      if (val === "True" || val === "False") return <span className="text-amber-600 font-semibold dark:text-amber-400">{val}</span>;
+      if (val === "None") return <span className="text-slate-400 italic">None</span>;
       if (val.startsWith("'") || val.startsWith('"')) return <span className="text-emerald-600 dark:text-emerald-400">{val}</span>;
-      if (val.includes(".") || val === "inf") return <span className="text-blue-600 dark:text-blue-400">{val}</span>;
+      if (val === "inf" || val === "-inf") return <span className="text-blue-600 dark:text-blue-400">∞</span>;
+      if (/^-?\d+\.?\d*$/.test(val)) return <span className="text-violet-600 font-semibold dark:text-violet-400">{val}</span>;
       return <span className="text-violet-600 dark:text-violet-400">{val}</span>;
     }
-    if (v.kind === "ref") return <span className="text-sky-600 dark:text-sky-400">ref</span>;
-    if (v.kind === "ellipsis") return <span className="text-slate-400">...</span>;
-    return <span className="text-slate-500">{(v as any).value ?? "?"}</span>;
+    if (v.kind === "ref") {
+      const oid = (v as RefVal).oid;
+      const heapObj = trace?.heap?.[oid];
+      if (heapObj) {
+        return (
+          <span className="inline-flex items-center gap-1.5 text-sky-600 dark:text-sky-400" title={heapObj.repr ?? ""}>
+            <span className="inline-block size-2 rounded-sm bg-sky-400/60 shrink-0" />
+            <span className="font-mono text-[10px] font-bold">{heapObj.type}</span>
+            <span className="font-mono text-[10px] opacity-75">[{heapObj.length ?? "?"}]</span>
+            {showRepr && heapObj.repr && (
+              <span className="font-mono text-[10px] text-sky-500 dark:text-sky-500 truncate max-w-[120px] opacity-80">
+                {heapObj.repr}
+              </span>
+            )}
+          </span>
+        );
+      }
+      return <span className="text-sky-600/50 dark:text-sky-400/50 text-[10px]">ref</span>;
+    }
+    if (v.kind === "ellipsis") return <span className="text-slate-400 italic">...</span>;
+    return <span className="text-slate-500 font-mono text-[11px]">{(v as any).value ?? "?"}</span>;
   };
 
   const renderCodeLine = (line: string, idx: number) => {
@@ -462,7 +496,7 @@ sys.stdout = _saved_out
                   className="flex items-center justify-between rounded-lg px-2 py-1.5 text-xs transition hover:bg-slate-50 dark:hover:bg-slate-800/50"
                 >
                   <span className="font-bold text-slate-700 dark:text-slate-200">{name}</span>
-                  <span className="font-mono text-[11px]">{renderInlineVal(info)}</span>
+                  <span className="font-mono text-[11px]">{renderInlineVal(info, true)}</span>
                 </div>
               ))}
             </div>
