@@ -134,7 +134,7 @@ print("Expected  : 1/1! + 2/2! + 3/3! + 4/4! + 5/5!")`,
 // ─── Injected Python Tracer ───────────────────────────────────────────
 
 const TRACER_SETUP = `
-import sys, json
+import sys, json, io
 
 _trace = {"steps": [], "heap": {}, "stdout": "", "error": None}
 _MAX = 300
