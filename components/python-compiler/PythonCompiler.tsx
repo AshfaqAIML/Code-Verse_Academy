@@ -229,24 +229,31 @@ export default function PythonCompiler() {
   const editorRef = useRef<any>(null);
   const stepperAnimRef = useRef<number | null>(null);
 
-  // Load Pyodide
+  // Load Pyodide (once)
   useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://cdn.jsdelivr.net/pyodide/v0.26.1/full/pyodide.js";
-    script.async = true;
-    script.onload = async () => {
+    if (pyodideRef.current) { setIsLoading(false); return; }
+
+    const init = async () => {
       try {
+        if (typeof (window as any).loadPyodide !== "function") {
+          const script = document.createElement("script");
+          script.src = "https://cdn.jsdelivr.net/pyodide/v0.26.1/full/pyodide.js";
+          document.body.appendChild(script);
+          await new Promise<void>((resolve, reject) => {
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error("Script load failed"));
+          });
+        }
         const pyodide = await (window as any).loadPyodide();
-        await pyodide.loadPackage(["pandas", "numpy"]);
         pyodideRef.current = pyodide;
         setIsLoading(false);
-      } catch {
+      } catch (e) {
+        console.error("Pyodide init failed:", e);
         setOutput("Failed to load Python runtime. Please refresh.");
         setIsLoading(false);
       }
     };
-    document.body.appendChild(script);
-    return () => { document.body.removeChild(script); };
+    init();
   }, []);
 
   // Step animation
