@@ -38,13 +38,19 @@ def _desc(v, depth=0):
     return {"kind": type(v).__name__, "value": repr(v)[:80]}
 
 def _snap(frame):
+    import types as _types
     step = {"line": frame.f_lineno, "locals": {}, "funcName": frame.f_code.co_name, "funcFrame": frame.f_code.co_name or "Global", "stdout": ""}
     for k, v in frame.f_locals.items():
-        if not k.startswith("_"):
-            try:
-                step["locals"][k] = _desc(v)
-            except:
-                step["locals"][k] = {"kind": "error", "value": "?"}
+        if k.startswith("_"):
+            continue
+        if isinstance(v, _types.ModuleType):
+            continue
+        if callable(v) and not isinstance(v, type):
+            continue
+        try:
+            step["locals"][k] = _desc(v)
+        except:
+            step["locals"][k] = {"kind": "error", "value": "?"}
     try:
         step["stdout"] = sys.stdout.getvalue()
     except:
