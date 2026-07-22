@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Editor from "@monaco-editor/react";
 
 // ─── Types ────────────────────────────────────────────────────────────
@@ -131,6 +131,65 @@ print("Expected  : 1/1! + 2/2! + 3/3! + 4/4! + 5/5!")`,
   },
 ];
 
+// ─── Injected Python Tracer ───────────────────────────────────────────
+
+const TRACER_SETUP = `
+import sys, json, io
+
+_trace = {"steps": [], "heap": {}, "stdout": "", "error": None}
+_MAX = 300
+
+def _desc(v, depth=0):
+    if depth > 2:
+        return {"kind": "ellipsis"}
+    if isinstance(v, (int, float, bool, type(None))):
+        return {"kind": "literal", "type": type(v).__name__, "value": repr(v)}
+    if isinstance(v, str):
+        if len(v) > 60:
+            return {"kind": "literal", "type": "str", "value": repr(v[:60]) + "..."}
+        return {"kind": "literal", "type": "str", "value": repr(v)}
+    if isinstance(v, list):
+        oid = "oid_" + str(id(v))
+        if oid not in _trace["heap"]:
+            _trace["heap"][oid] = {"type": "list", "items": [_desc(x, depth+1) for x in v], "length": len(v), "repr": repr(v)[:200]}
+        return {"kind": "ref", "oid": oid}
+    if isinstance(v, tuple):
+        oid = "oid_" + str(id(v))
+        if oid not in _trace["heap"]:
+            _trace["heap"][oid] = {"type": "tuple", "items": [_desc(x, depth+1) for x in v], "length": len(v), "repr": repr(v)[:200]}
+        return {"kind": "ref", "oid": oid}
+    if isinstance(v, dict):
+        oid = "oid_" + str(id(v))
+        if oid not in _trace["heap"]:
+            pairs = []
+            for k, val in list(v.items())[:12]:
+                pairs.append({"key": _desc(k, depth+1), "val": _desc(val, depth+1)})
+            _trace["heap"][oid] = {"type": "dict", "pairs": pairs, "length": len(v), "repr": repr(v)[:200]}
+        return {"kind": "ref", "oid": oid}
+    return {"kind": type(v).__name__, "value": repr(v)[:80]}
+
+def _snap(frame):
+    step = {"line": frame.f_lineno, "locals": {}, "funcName": frame.f_code.co_name, "funcFrame": frame.f_code.co_name or "Global", "stdout": ""}
+    for k, v in frame.f_locals.items():
+        if not k.startswith("_"):
+            try:
+                step["locals"][k] = _desc(v)
+            except:
+                step["locals"][k] = {"kind": "error", "value": "?"}
+    try:
+        step["stdout"] = sys.stdout.getvalue()
+    except:
+        pass
+    return step
+
+class _T:
+    def __call__(self, frame, event, arg):
+        if event == "line" and len(_trace["steps"]) < _MAX:
+            if frame.f_code.co_filename == "<usercode>":
+                _trace["steps"].append(_snap(frame))
+        return self
+`;
+
 // ─── Helpers ──────────────────────────────────────────────────────────
 
 function codeLines(code: string): string[] {
@@ -157,8 +216,8 @@ function getObjectColor(type: string, index?: number): string {
 
 export default function PythonCompiler() {
   const [code, setCode] = useState(DEFAULT_CODE);
-  const [output, setOutput] = useState("Write Python code and click Run to see output, or Visualize Execution to step through it.");
-  const [isLoading, setIsLoading] = useState(false);
+  const [output, setOutput] = useState("Loading Python runtime...");
+  const [isLoading, setIsLoading] = useState(true);
   const [currentStepIdx, setCurrentStepIdx] = useState(0);
   const [trace, setTrace] = useState<TraceResult | null>(null);
   const [activeTab, setActiveTab] = useState<"output" | "frames">("frames");
@@ -166,7 +225,38 @@ export default function PythonCompiler() {
   const [showExamples, setShowExamples] = useState(false);
   const [language, setLanguage] = useState("Python");
   const [showLangPicker, setShowLangPicker] = useState(false);
+  const pyodideRef = useRef<any>(null);
   const editorRef = useRef<any>(null);
+
+  // Load Pyodide from local public/ files
+  useEffect(() => {
+    if (pyodideRef.current) { setIsLoading(false); return; }
+
+    const init = async () => {
+      try {
+        if (typeof (window as any).loadPyodide !== "function") {
+          const script = document.createElement("script");
+          script.src = "/pyodide/pyodide.js";
+          document.body.appendChild(script);
+          await new Promise<void>((resolve, reject) => {
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error("Script load failed"));
+          });
+        }
+        const pyodide = await (window as any).loadPyodide({
+          indexURL: "/pyodide/",
+        });
+        pyodideRef.current = pyodide;
+        setIsLoading(false);
+        setOutput("Write Python code and click Run to see output, or Visualize Execution to step through it.");
+      } catch (e) {
+        console.error("Pyodide init failed:", e);
+        setOutput("Failed to load Python runtime. Please refresh the page.");
+        setIsLoading(false);
+      }
+    };
+    init();
+  }, []);
 
   const lines = useMemo(() => codeLines(code), [code]);
   const stepCount = trace?.steps.length ?? 0;
@@ -182,58 +272,63 @@ export default function PythonCompiler() {
   // ─── Actions ───────────────────────────────────────────────────────
 
   const runCode = useCallback(async () => {
+    if (!pyodideRef.current) return;
     setOutput("Running...");
     setTrace(null);
-    setIsLoading(true);
 
     try {
-      const res = await fetch("/api/execute", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, mode: "run" }),
-      });
-      const data = await res.json();
-      setOutput(data.error || data.output || "Code ran successfully with no output.");
+      pyodideRef.current.runPython(`
+import sys, io
+sys.stdout = io.StringIO()
+      `);
+      await pyodideRef.current.runPythonAsync(code);
+      const stdout = pyodideRef.current.runPython("sys.stdout.getvalue()");
+      setOutput(stdout || "Code ran successfully with no output.");
     } catch (error: any) {
       setOutput(`Error:\n${error.message}`);
-    } finally {
-      setIsLoading(false);
     }
   }, [code]);
 
   const visualizeCode = useCallback(async () => {
+    if (!pyodideRef.current) return;
     setOutput("Tracing execution...");
     setTrace(null);
-    setIsLoading(true);
 
     try {
-      const res = await fetch("/api/execute", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, mode: "visualize" }),
-      });
-      const data = await res.json();
+      pyodideRef.current.runPython(TRACER_SETUP);
 
-      if (data.error && !data.trace) {
-        setOutput(`Visualization error:\n${data.error}`);
-        return;
+      pyodideRef.current.runPython(`
+_saved_out = sys.stdout
+sys.stdout = io.StringIO()
+sys.settrace(_T())
+      `);
+
+      try {
+        await pyodideRef.current.runPythonAsync(code, { filename: "<usercode>" });
+      } catch (err: any) {
+        pyodideRef.current.runPython(`_trace["error"] = ${JSON.stringify(err.message)}`);
       }
 
-      const parsed = data.trace as TraceResult;
+      pyodideRef.current.runPython(`
+sys.settrace(None)
+_trace["stdout"] = sys.stdout.getvalue()
+sys.stdout = _saved_out
+      `);
 
-      if (!parsed || !parsed.steps || parsed.steps.length === 0) {
-        setOutput(data.output || "No steps captured — code may have run too quickly.");
+      const raw = pyodideRef.current.runPython("json.dumps(_trace)") as string;
+      const parsed = JSON.parse(raw) as TraceResult;
+
+      if (parsed.steps.length === 0) {
+        setOutput(parsed.stdout || "No steps captured — code may have run too quickly.");
         return;
       }
 
       setTrace(parsed);
       setCurrentStepIdx(0);
       setActiveTab("frames");
-      setOutput(parsed.stdout || data.output || "✓ Execution complete. Step through to see variables and objects.");
+      setOutput(parsed.stdout || "Execution complete. Step through to see variables and objects.");
     } catch (error: any) {
       setOutput(`Visualization error:\n${error.message}`);
-    } finally {
-      setIsLoading(false);
     }
   }, [code]);
 
@@ -638,17 +733,21 @@ export default function PythonCompiler() {
                 </div>
               </>
             ) : (
-              <button
-                onClick={visualizeCode}
-                disabled={isLoading}
-                className="flex items-center justify-center gap-2 text-sm text-slate-400 transition hover:text-brand-600 dark:hover:text-brand-400 disabled:opacity-50"
-              >
+              <div className="flex items-center justify-center gap-2 text-sm text-slate-400">
                 <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
                   <circle cx="12" cy="12" r="3" />
                 </svg>
-                Click <span className="font-bold text-brand-600">Visualize Execution</span> to begin stepping through your code
-              </button>
+                Click{" "}
+                <button
+                  onClick={visualizeCode}
+                  disabled={isLoading}
+                  className="cursor-pointer font-bold text-brand-600 underline underline-offset-2 transition hover:text-brand-700 disabled:opacity-50 dark:hover:text-brand-400"
+                >
+                  Visualize Execution
+                </button>
+                {" "}to begin stepping through your code
+              </div>
             )}
           </div>
         </div>
@@ -758,11 +857,11 @@ export default function PythonCompiler() {
       <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-1.5">
-            <span className="inline-block size-2 rounded-full bg-emerald-400" />
-            Ready
+            <span className={`inline-block size-2 rounded-full ${isLoading ? "bg-amber-400 animate-pulse" : "bg-emerald-400"}`} />
+            {isLoading ? "Loading Python runtime..." : "Runtime ready"}
           </span>
           <span>|</span>
-          <span>Python 3.10 (Piston API)</span>
+          <span>Python 3.11 (WebAssembly)</span>
         </div>
         <div>
           {trace && (
