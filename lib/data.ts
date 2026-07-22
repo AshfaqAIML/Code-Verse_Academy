@@ -223,7 +223,7 @@ export const navItems = [
   { label: "Tutorials", href: "/tutorials", icon: NotebookTabs },
 
   { label: "Playground", href: "/playground", icon: MonitorPlay },
-  { label: "Python Compiler", href: "/python-compiler", icon: Code2 },
+  { label: "Compiler & Visualizer", href: "/python-compiler", icon: Code2 },
   { label: "Dashboard", href: "/dashboard", icon: LineChart },
   { label: "Practice", href: "/practice", icon: Trophy },
   { label: "Projects", href: "/projects", icon: Rocket },

@@ -5,32 +5,21 @@ import Editor from "@monaco-editor/react";
 
 // ─── Types ────────────────────────────────────────────────────────────
 
-type LiteralVal = { kind: "literal"; type: string; value: string };
-type RefVal = { kind: "ref"; oid: string };
-type EllipsisVal = { kind: "ellipsis" };
-type VarInfo = LiteralVal | RefVal | EllipsisVal | { kind: string; value: string };
-
-type HeapObject = {
-  type: "list" | "dict" | "tuple" | "set";
-  items?: VarInfo[];
-  pairs?: { key: VarInfo; val: VarInfo }[];
-  length: number;
-  repr?: string;
+type VizVal = { t: string; v?: any; id?: number };
+type VizFrame = { name: string; locals: [string, VizVal][] };
+type VizHeapEntry = { kind: string; items?: VizVal[]; entries?: [VizVal, VizVal][] };
+type VizStep = {
+  line: number | null;
+  stack: VizFrame[];
+  heap: Record<string, VizHeapEntry>;
+  output: string;
+  final?: boolean;
 };
-
-type Step = {
-  line: number;
-  locals: Record<string, VarInfo>;
-  funcName: string;
-  funcFrame: string;
-  stdout: string;
-};
-
-type TraceResult = {
-  steps: Step[];
-  heap: Record<string, HeapObject>;
-  stdout: string;
-  error: string | null;
+type VizResult = {
+  steps: VizStep[];
+  inputs: string[];
+  error: string;
+  truncated: boolean;
 };
 
 // ─── Default code ─────────────────────────────────────────────────────
@@ -53,22 +42,24 @@ print(result)`;
 
 const EXAMPLES = [
   {
-    label: "Max Product",
-    code: `def max_product(nums):
-    if not nums:
-        return 0
-    max1 = max2 = float('-inf')
-    for n in nums:
-        if n > max1:
-            max2 = max1
-            max1 = n
-        elif n > max2:
-            max2 = n
-    return max1 * max2
-
-nums = [12, 43, 6, 8, 3, 6]
-result = max_product(nums)
-print(result)`,
+    label: "Star Pattern",
+    code: `rows = 5
+for i in range(1, rows + 1):
+    for j in range(1, i + 1):
+        print('*', end='')
+    print()`,
+  },
+  {
+    label: "FizzBuzz",
+    code: `for n in range(1, 21):
+    if n % 15 == 0:
+        print("FizzBuzz")
+    elif n % 3 == 0:
+        print("Fizz")
+    elif n % 5 == 0:
+        print("Buzz")
+    else:
+        print(n)`,
   },
   {
     label: "Fibonacci",
@@ -131,113 +122,292 @@ print("Expected  : 1/1! + 2/2! + 3/3! + 4/4! + 5/5!")`,
   },
 ];
 
-// ─── Injected Python Tracer ───────────────────────────────────────────
+// ─── Socket-style Tracer (Python) ─────────────────────────────────────
 
-const TRACER_SETUP = `
-import sys, json, io
+const TRACER_DRIVER = `
+import sys, json, traceback, builtins, io
 
-_trace = {"steps": [], "heap": {}, "stdout": "", "error": None}
-_MAX = 300
+_FILENAME = "<usercode>"
+_MAX_STEPS = 500
 
-def _desc(v, depth=0):
-    if depth > 2:
-        return {"kind": "ellipsis"}
-    if isinstance(v, (int, float, bool, type(None))):
-        return {"kind": "literal", "type": type(v).__name__, "value": repr(v)}
-    if isinstance(v, str):
-        if len(v) > 60:
-            return {"kind": "literal", "type": "str", "value": repr(v[:60]) + "..."}
-        return {"kind": "literal", "type": "str", "value": repr(v)}
-    if isinstance(v, list):
-        oid = "oid_" + str(id(v))
-        if oid not in _trace["heap"]:
-            _trace["heap"][oid] = {"type": "list", "items": [_desc(x, depth+1) for x in v], "length": len(v), "repr": repr(v)[:200]}
-        return {"kind": "ref", "oid": oid}
-    if isinstance(v, tuple):
-        oid = "oid_" + str(id(v))
-        if oid not in _trace["heap"]:
-            _trace["heap"][oid] = {"type": "tuple", "items": [_desc(x, depth+1) for x in v], "length": len(v), "repr": repr(v)[:200]}
-        return {"kind": "ref", "oid": oid}
-    if isinstance(v, dict):
-        oid = "oid_" + str(id(v))
-        if oid not in _trace["heap"]:
-            pairs = []
-            for k, val in list(v.items())[:12]:
-                pairs.append({"key": _desc(k, depth+1), "val": _desc(val, depth+1)})
-            _trace["heap"][oid] = {"type": "dict", "pairs": pairs, "length": len(v), "repr": repr(v)[:200]}
-        return {"kind": "ref", "oid": oid}
-    return {"kind": type(v).__name__, "value": repr(v)[:80]}
+class _StepLimitExceeded(Exception):
+    pass
 
-def _snap(frame):
-    import types as _types
-    step = {"line": frame.f_lineno, "locals": {}, "funcName": frame.f_code.co_name, "funcFrame": frame.f_code.co_name or "Global", "stdout": ""}
-    for k, v in frame.f_locals.items():
-        if k.startswith("_"):
-            continue
-        if isinstance(v, _types.ModuleType):
-            continue
-        if callable(v) and not isinstance(v, type):
-            continue
+_out_buf = []
+_steps = []
+_inputs_log = []
+_obj_registry = {}
+_next_id = [1]
+
+def _get_obj_id(obj):
+    oid = id(obj)
+    if oid not in _obj_registry:
+        _obj_registry[oid] = _next_id[0]
+        _next_id[0] += 1
+    return _obj_registry[oid]
+
+def _snapshot(line, frame):
+    heap = {}
+    visiting = set()
+
+    def ser(val):
+        if val is None:
+            return {"t": "none"}
+        if isinstance(val, bool):
+            return {"t": "bool", "v": val}
+        if isinstance(val, (int, float)):
+            return {"t": "num", "v": val}
+        if isinstance(val, str):
+            v = val if len(val) <= 200 else val[:200] + "\\u2026"
+            return {"t": "str", "v": v}
+        if isinstance(val, (list, tuple, set, frozenset, dict)):
+            oid = _get_obj_id(val)
+            kind = ("list" if isinstance(val, list) else
+                    "tuple" if isinstance(val, tuple) else
+                    "dict" if isinstance(val, dict) else "set")
+            if str(oid) not in heap and oid not in visiting:
+                visiting.add(oid)
+                if kind == "dict":
+                    entries = []
+                    for i, (k, v) in enumerate(val.items()):
+                        if i >= 40:
+                            entries.append([{"t": "str", "v": "\\u2026"}, {"t": "str", "v": "truncated"}])
+                            break
+                        entries.append([ser(k), ser(v)])
+                    heap[str(oid)] = {"kind": "dict", "entries": entries}
+                else:
+                    items = []
+                    for i, item in enumerate(val):
+                        if i >= 60:
+                            items.append({"t": "str", "v": "\\u2026 truncated"})
+                            break
+                        items.append(ser(item))
+                    heap[str(oid)] = {"kind": kind, "items": items}
+                visiting.discard(oid)
+            return {"t": "ref", "id": oid}
+        if callable(val):
+            return {"t": "func", "v": getattr(val, "__name__", "function")}
         try:
-            step["locals"][k] = _desc(v)
-        except:
-            step["locals"][k] = {"kind": "error", "value": "?"}
-    try:
-        step["stdout"] = sys.stdout.getvalue()
-    except:
-        pass
-    return step
+            r = repr(val)
+        except Exception:
+            r = "<object>"
+        if len(r) > 200:
+            r = r[:200] + "\\u2026"
+        return {"t": "obj", "v": r}
 
-class _T:
-    def __call__(self, frame, event, arg):
-        if event == "line" and len(_trace["steps"]) < _MAX:
-            if frame.f_code.co_filename == "<usercode>":
-                _trace["steps"].append(_snap(frame))
-        return self
+    import types as _types
+    chain = []
+    f = frame
+    while f is not None:
+        if f.f_code.co_filename == _FILENAME:
+            chain.append(f)
+        elif f.f_back and f.f_back.f_code.co_filename == _FILENAME:
+            chain.append(f)
+        f = f.f_back
+    chain.reverse()
+
+    stack = []
+    for fr in chain:
+        if fr.f_code.co_filename != _FILENAME:
+            continue
+        is_global = fr.f_back is None or fr.f_back.f_code.co_filename != _FILENAME
+        name = "Global frame" if is_global else fr.f_code.co_name + "()"
+        locs = []
+        for k, v in fr.f_locals.items():
+            if k.startswith("__"):
+                continue
+            if isinstance(v, _types.ModuleType):
+                continue
+            if callable(v) and not isinstance(v, type):
+                continue
+            locs.append([k, ser(v)])
+        stack.append({"name": name, "locals": locs})
+
+    return {"line": line, "stack": stack, "heap": heap, "output": "".join(_out_buf)}
+
+def _tracer(frame, event, arg):
+    if frame.f_code.co_filename != _FILENAME:
+        return _tracer
+    if event == "line":
+        if len(_steps) >= _MAX_STEPS:
+            raise _StepLimitExceeded()
+        _steps.append(_snapshot(frame.f_lineno, frame))
+        return _tracer
+    if event == "call":
+        return _tracer
+    return _tracer
+
+class _Writer:
+    def write(self, s):
+        if s:
+            _out_buf.append(s)
+        return len(s)
+    def flush(self):
+        pass
+
+_stdin_lines = _stdin_raw.split("\\n") if _stdin_raw else []
+_stdin_index = [0]
+_old_stdout = sys.stdout
+_old_input = builtins.input
+_error_text = ""
+_truncated = False
+_g = {"__name__": "__main__", "__builtins__": builtins}
+
+sys.stdout = _Writer()
+
+def _custom_input(prompt=""):
+    if prompt:
+        _out_buf.append(str(prompt))
+    if _stdin_index[0] < len(_stdin_lines):
+        line = _stdin_lines[_stdin_index[0]]
+        _stdin_index[0] += 1
+        _out_buf.append(line + "\\n")
+        _inputs_log.append(line)
+        return line
+    line = input(str(prompt) or "")
+    _out_buf.append(line + "\\n")
+    _inputs_log.append(line)
+    return line
+
+builtins.input = _custom_input
+
+try:
+    sys.settrace(_tracer)
+    exec(compile(_user_code, _FILENAME, "exec"), _g)
+except _StepLimitExceeded:
+    _truncated = True
+except SystemExit:
+    pass
+except Exception:
+    _full_tb = traceback.format_exc()
+    _marker = "File \\"" + _FILENAME + "\\""
+    _idx = _full_tb.find(_marker)
+    if _idx != -1:
+        _error_text = "Traceback (most recent call last):\\n  " + _full_tb[_idx:]
+    else:
+        _error_text = _full_tb
+finally:
+    sys.settrace(None)
+    sys.stdout = _old_stdout
+    builtins.input = _old_input
+
+_final_heap = {}
+_final_visiting = set()
+
+def _ser2(val):
+    if val is None:
+        return {"t": "none"}
+    if isinstance(val, bool):
+        return {"t": "bool", "v": val}
+    if isinstance(val, (int, float)):
+        return {"t": "num", "v": val}
+    if isinstance(val, str):
+        v = val if len(val) <= 200 else val[:200] + "\\u2026"
+        return {"t": "str", "v": v}
+    if isinstance(val, (list, tuple, set, frozenset, dict)):
+        oid = _get_obj_id(val)
+        kind = ("list" if isinstance(val, list) else
+                "tuple" if isinstance(val, tuple) else
+                "dict" if isinstance(val, dict) else "set")
+        if str(oid) not in _final_heap and oid not in _final_visiting:
+            _final_visiting.add(oid)
+            if kind == "dict":
+                entries = []
+                for k, v in val.items():
+                    entries.append([_ser2(k), _ser2(v)])
+                _final_heap[str(oid)] = {"kind": "dict", "entries": entries}
+            else:
+                items = [_ser2(item) for item in val]
+                _final_heap[str(oid)] = {"kind": kind, "items": items}
+            _final_visiting.discard(oid)
+        return {"t": "ref", "id": oid}
+    if callable(val):
+        return {"t": "func", "v": getattr(val, "__name__", "function")}
+    try:
+        r = repr(val)
+    except Exception:
+        r = "<object>"
+    return {"t": "obj", "v": r}
+
+import types as _types
+_final_locals = []
+for _k, _v in _g.items():
+    if _k.startswith("__"):
+        continue
+    if isinstance(_v, _types.ModuleType):
+        continue
+    if callable(_v) and not isinstance(_v, type):
+        continue
+    _final_locals.append([_k, _ser2(_v)])
+
+_steps.append({
+    "line": None,
+    "stack": [{"name": "Global frame", "locals": _final_locals}],
+    "heap": _final_heap,
+    "output": "".join(_out_buf),
+    "final": True,
+})
+
+_viz_result_json = json.dumps({
+    "steps": _steps,
+    "inputs": _inputs_log,
+    "error": _error_text,
+    "truncated": _truncated,
+})
 `;
 
 // ─── Helpers ──────────────────────────────────────────────────────────
 
-function codeLines(code: string): string[] {
-  return code.split("\n");
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-function isRefVar(v: VarInfo): v is RefVal {
-  return v.kind === "ref";
-}
-
-function getObjectColor(type: string, index?: number): string {
-  const colors = [
-    "bg-amber-100 border-amber-300 text-amber-900 dark:bg-amber-900/30 dark:border-amber-600 dark:text-amber-200",
-    "bg-sky-100 border-sky-300 text-sky-900 dark:bg-sky-900/30 dark:border-sky-600 dark:text-sky-200",
-    "bg-violet-100 border-violet-300 text-violet-900 dark:bg-violet-900/30 dark:border-violet-600 dark:text-violet-200",
-    "bg-emerald-100 border-emerald-300 text-emerald-900 dark:bg-emerald-900/30 dark:border-emerald-600 dark:text-emerald-200",
-    "bg-rose-100 border-rose-300 text-rose-900 dark:bg-rose-900/30 dark:border-rose-600 dark:text-rose-200",
-    "bg-cyan-100 border-cyan-300 text-cyan-900 dark:bg-cyan-900/30 dark:border-cyan-600 dark:text-cyan-200",
-  ];
-  return colors[(index ?? 0) % colors.length];
+function assignHeapLabels(steps: VizStep[]): Map<string, string> {
+  const labels = new Map<string, string>();
+  const counts: Record<string, number> = { list: 0, dict: 0, tuple: 0, set: 0 };
+  const prefix: Record<string, string> = { list: "L", dict: "D", tuple: "T", set: "S" };
+  for (const step of steps) {
+    for (const oid of Object.keys(step.heap || {})) {
+      if (!labels.has(oid)) {
+        const kind = step.heap[oid].kind;
+        counts[kind] = (counts[kind] || 0) + 1;
+        labels.set(oid, (prefix[kind] || "?") + counts[kind]);
+      }
+    }
+  }
+  return labels;
 }
 
 // ─── Component ────────────────────────────────────────────────────────
 
+type ViewMode = "run" | "viz";
+
 export default function PythonCompiler() {
   const [code, setCode] = useState(DEFAULT_CODE);
+  const [stdin, setStdin] = useState("");
   const [output, setOutput] = useState("Loading Python runtime...");
   const [isLoading, setIsLoading] = useState(true);
-  const [currentStepIdx, setCurrentStepIdx] = useState(0);
-  const [trace, setTrace] = useState<TraceResult | null>(null);
-  const [activeTab, setActiveTab] = useState<"output" | "frames">("frames");
+  const [isRunning, setIsRunning] = useState(false);
+  const [ledState, setLedState] = useState<"idle" | "running" | "success" | "error">("idle");
+
+  const [viewMode, setViewMode] = useState<ViewMode>("run");
   const [selectedExample, setSelectedExample] = useState<string | null>(null);
   const [showExamples, setShowExamples] = useState(false);
-  const [language, setLanguage] = useState("Python");
-  const [showLangPicker, setShowLangPicker] = useState(false);
+
+  const [vizResult, setVizResult] = useState<VizResult | null>(null);
+  const [vizIdx, setVizIdx] = useState(0);
+  const [heapLabels, setHeapLabels] = useState<Map<string, string>>(new Map());
+  const [vizRunning, setVizRunning] = useState(false);
+
   const pyodideRef = useRef<any>(null);
   const editorRef = useRef<any>(null);
 
-  // Load Pyodide from local public/ files
+  // ─── Load Pyodide ─────────────────────────────────────────────────
   useEffect(() => {
-    if (pyodideRef.current) { setIsLoading(false); return; }
-
+    if (pyodideRef.current) {
+      setIsLoading(false);
+      return;
+    }
     const init = async () => {
       try {
         if (typeof (window as any).loadPyodide !== "function") {
@@ -249,12 +419,10 @@ export default function PythonCompiler() {
             script.onerror = () => reject(new Error("Script load failed"));
           });
         }
-        const pyodide = await (window as any).loadPyodide({
-          indexURL: "/pyodide/",
-        });
+        const pyodide = await (window as any).loadPyodide({ indexURL: "/pyodide/" });
         pyodideRef.current = pyodide;
         setIsLoading(false);
-        setOutput("Write Python code and click Run to see output, or Visualize Execution to step through it.");
+        setOutput("Press Run to execute your code, or Visualize to step through it.");
       } catch (e) {
         console.error("Pyodide init failed:", e);
         setOutput("Failed to load Python runtime. Please refresh the page.");
@@ -264,258 +432,203 @@ export default function PythonCompiler() {
     init();
   }, []);
 
-  const lines = useMemo(() => codeLines(code), [code]);
-  const stepCount = trace?.steps.length ?? 0;
-  const currentStep = trace?.steps[currentStepIdx] ?? null;
-  const nextStep = currentStepIdx < stepCount - 1 ? trace?.steps[currentStepIdx + 1] : null;
+  const codeLines = useMemo(() => code.split("\n"), [code]);
 
-  // Executed line numbers (all steps up to current)
-  const executedLines = useMemo(() => {
-    if (!trace) return new Set<number>();
-    return new Set(trace.steps.slice(0, currentStepIdx + 1).map((s) => s.line));
-  }, [trace, currentStepIdx]);
+  // Viz derived state
+  const vizSteps = vizResult?.steps ?? [];
+  const vizStep = vizSteps[vizIdx] ?? null;
+  const vizPrevLine = vizIdx > 0 ? vizSteps[vizIdx - 1]?.line : null;
 
-  // ─── Actions ───────────────────────────────────────────────────────
+  const heapLabelsRef = useRef(heapLabels);
+  heapLabelsRef.current = heapLabels;
+
+  // ─── Actions ──────────────────────────────────────────────────────
+
+  const downloadPy = useCallback(() => {
+    const blob = new Blob([code], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "main.py";
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [code]);
 
   const runCode = useCallback(async () => {
-    if (!pyodideRef.current) return;
-    setOutput("Running...");
-    setTrace(null);
+    const py = pyodideRef.current;
+    if (!py || isRunning) return;
+    setViewMode("run");
+    setVizResult(null);
+    setIsRunning(true);
+    setLedState("running");
+    setOutput("");
 
     try {
-      pyodideRef.current.runPython(`
-import sys, io
-sys.stdout = io.StringIO()
+      await py.runPythonAsync(`
+import sys, builtins, traceback
+
+class _Writer:
+    def __init__(self):
+        self._buf = []
+    def write(self, s):
+        if s:
+            self._buf.append(s)
+    def flush(self):
+        pass
+    def getvalue(self):
+        return "".join(self._buf)
+
+_w = _Writer()
+_old_stdout = sys.stdout
+sys.stdout = _w
+
+_stdin_lines = ${JSON.stringify(stdin)}.split("\\n") if ${JSON.stringify(stdin)} else []
+_stdin_idx = [0]
+def _input(prompt=""):
+    if prompt:
+        _w.write(str(prompt))
+    if _stdin_idx[0] < len(_stdin_lines):
+        line = _stdin_lines[_stdin_idx[0]]
+        _stdin_idx[0] += 1
+        _w.write(line + "\\n")
+        return line
+    line = input(str(prompt) or "")
+    _w.write(line + "\\n")
+    return line
+_old_input = builtins.input
+builtins.input = _input
+
+_user_code = ${JSON.stringify(code)}
+_error = None
+try:
+    exec(compile(_user_code, "main.py", "exec"), {"__name__": "__main__"})
+except SystemExit:
+    pass
+except Exception:
+    _error = traceback.format_exc()
+finally:
+    sys.stdout = _old_stdout
+    builtins.input = _old_input
+
+import json as _json
+_result = _json.dumps({"output": _w.getvalue(), "error": _error})
       `);
-      await pyodideRef.current.runPythonAsync(code);
-      const stdout = pyodideRef.current.runPython("sys.stdout.getvalue()");
-      setOutput(stdout || "Code ran successfully with no output.");
-    } catch (error: any) {
-      setOutput(`Error:\n${error.message}`);
+
+      const raw = py.runPython("_result");
+      const res = JSON.parse(raw);
+      const combined = (res.output || "") + (res.error ? "\n" + res.error : "");
+      setOutput(combined || "(no output)");
+      setLedState(res.error ? "error" : "success");
+    } catch (err: any) {
+      setOutput(`Runtime error: ${err.message}`);
+      setLedState("error");
+    } finally {
+      setIsRunning(false);
     }
-  }, [code]);
+  }, [code, stdin, isRunning]);
 
   const visualizeCode = useCallback(async () => {
-    if (!pyodideRef.current) return;
-    setOutput("Tracing execution...");
-    setTrace(null);
+    const py = pyodideRef.current;
+    if (!py || vizRunning) return;
+    setVizRunning(true);
+    setLedState("running");
+    setVizResult(null);
 
     try {
-      pyodideRef.current.runPython(TRACER_SETUP);
+      py.globals.set("_user_code", code);
+      py.globals.set("_stdin_raw", stdin);
+      await py.runPythonAsync(TRACER_DRIVER);
+      const raw = py.globals.get("_viz_result_json") as string;
+      const result: VizResult = JSON.parse(raw);
 
-      pyodideRef.current.runPython(`
-_saved_out = sys.stdout
-sys.stdout = io.StringIO()
-sys.settrace(_T())
-      `);
-
-      try {
-        await pyodideRef.current.runPythonAsync(code, { filename: "<usercode>" });
-      } catch (err: any) {
-        pyodideRef.current.runPython(`_trace["error"] = ${JSON.stringify(err.message)}`);
-      }
-
-      pyodideRef.current.runPython(`
-sys.settrace(None)
-_trace["stdout"] = sys.stdout.getvalue()
-sys.stdout = _saved_out
-      `);
-
-      const raw = pyodideRef.current.runPython("json.dumps(_trace)") as string;
-      const parsed = JSON.parse(raw) as TraceResult;
-
-      if (parsed.steps.length === 0) {
-        setOutput(parsed.stdout || "No steps captured — code may have run too quickly.");
-        return;
-      }
-
-      setTrace(parsed);
-      setCurrentStepIdx(0);
-      setActiveTab("frames");
-      setOutput(parsed.stdout || "Execution complete. Step through to see variables and objects.");
-    } catch (error: any) {
-      setOutput(`Visualization error:\n${error.message}`);
+      const labels = assignHeapLabels(result.steps);
+      setHeapLabels(labels);
+      setVizResult(result);
+      setVizIdx(0);
+      setViewMode("viz");
+      setLedState(result.error ? "error" : "success");
+    } catch (err: any) {
+      setOutput(`Visualization error: ${err.message}`);
+      setLedState("error");
+    } finally {
+      setVizRunning(false);
     }
-  }, [code]);
+  }, [code, stdin, vizRunning]);
 
   const stepperGo = useCallback((idx: number) => {
-    setCurrentStepIdx(Math.max(0, Math.min(idx, stepCount - 1)));
-  }, [stepCount]);
+    setVizIdx((prev) => Math.max(0, Math.min(idx, vizSteps.length - 1)));
+  }, [vizSteps.length]);
 
-  // Gather heap objects referenced in current step
-  const activeHeapEntries = useMemo(() => {
-    if (!currentStep || !trace) return [];
-    const oids = new Set<string>();
-    for (const v of Object.values(currentStep.locals)) {
-      if (isRefVar(v)) oids.add(v.oid);
-    }
-    return Array.from(oids).map((oid) => ({ oid, obj: trace.heap[oid] })).filter((e) => e.obj);
-  }, [currentStep, trace]);
+  // ─── Viz Renderers ────────────────────────────────────────────────
 
-  // ─── Renderers ──────────────────────────────────────────────────────
-
-  const renderInlineVal = (v: VarInfo | undefined, showRepr = false) => {
-    if (!v) return <span className="text-slate-400">—</span>;
-    if (v.kind === "literal") {
-      const val = (v as LiteralVal).value;
-      if (val === "True" || val === "False") return <span className="text-amber-600 font-semibold dark:text-amber-400">{val}</span>;
-      if (val === "None") return <span className="text-slate-400 italic">None</span>;
-      if (val.startsWith("'") || val.startsWith('"')) return <span className="text-emerald-600 dark:text-emerald-400">{val}</span>;
-      if (val === "inf" || val === "-inf") return <span className="text-blue-600 dark:text-blue-400">∞</span>;
-      if (/^-?\d+\.?\d*$/.test(val)) return <span className="text-violet-600 font-semibold dark:text-violet-400">{val}</span>;
-      return <span className="text-violet-600 dark:text-violet-400">{val}</span>;
-    }
-    if (v.kind === "ref") {
-      const oid = (v as RefVal).oid;
-      const heapObj = trace?.heap?.[oid];
-      if (heapObj) {
+  const renderVizVal = (node: VizVal | undefined): React.ReactNode => {
+    if (!node) return <span className="text-slate-400">?</span>;
+    switch (node.t) {
+      case "none":
+        return <span className="text-slate-400 italic">None</span>;
+      case "bool":
+        return <span className="text-amber-600 font-semibold dark:text-amber-400">{node.v ? "True" : "False"}</span>;
+      case "num":
+        return <span className="text-violet-600 font-semibold dark:text-violet-400">{String(node.v)}</span>;
+      case "str":
+        return <span className="text-emerald-600 dark:text-emerald-400">{JSON.stringify(node.v)}</span>;
+      case "func":
+        return <span className="text-slate-500">{escapeHtml(node.v)}()</span>;
+      case "obj":
+        return <span className="text-slate-500 font-mono text-[11px]">{escapeHtml(node.v)}</span>;
+      case "ref": {
+        const label = heapLabelsRef.current.get(String(node.id)) || `#${node.id}`;
         return (
-          <span className="inline-flex items-center gap-1.5 text-sky-600 dark:text-sky-400" title={heapObj.repr ?? ""}>
-            <span className="inline-block size-2 rounded-sm bg-sky-400/60 shrink-0" />
-            <span className="font-mono text-[10px] font-bold">{heapObj.type}</span>
-            <span className="font-mono text-[10px] opacity-75">[{heapObj.length ?? "?"}]</span>
-            {showRepr && heapObj.repr && (
-              <span className="font-mono text-[10px] text-sky-500 dark:text-sky-500 truncate max-w-[120px] opacity-80">
-                {heapObj.repr}
-              </span>
-            )}
+          <span className="inline-block rounded-md bg-teal-50 px-1.5 py-0.5 text-[11px] font-bold text-teal-700 border border-teal-200 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-700">
+            {label}
           </span>
         );
       }
-      return <span className="text-sky-600/50 dark:text-sky-400/50 text-[10px]">ref</span>;
+      default:
+        return <span className="text-slate-400">?</span>;
     }
-    if (v.kind === "ellipsis") return <span className="text-slate-400 italic">...</span>;
-    return <span className="text-slate-500 font-mono text-[11px]">{(v as any).value ?? "?"}</span>;
   };
 
-  const renderCodeLine = (line: string, idx: number) => {
-    const lineNum = idx + 1;
-    const isExecuted = executedLines.has(lineNum);
-    const isCurrent = currentStep?.line === lineNum;
-    const isNext = nextStep?.line === lineNum && !isCurrent;
-
-    let gutterContent: React.ReactNode = null;
-    let bgClass = "bg-transparent";
-    let borderClass = "border-transparent";
-
-    if (isCurrent) {
-      bgClass = "bg-emerald-50 dark:bg-emerald-950/30";
-      borderClass = "border-l-4 border-l-emerald-500";
-      gutterContent = (
-        <span className="absolute left-0 top-1/2 -translate-y-1/2 text-emerald-500">
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor">
-            <path d="M6 3.5v11l8-5.5z" />
-          </svg>
+  const renderHeapBody = (entry: VizHeapEntry): React.ReactNode => {
+    if (entry.kind === "dict" && entry.entries) {
+      return (
+        <span>
+          {"{ "}
+          {entry.entries.map(([k, v], i) => (
+            <span key={i}>
+              {i > 0 && ", "}
+              {renderVizVal(k)}
+              <span className="text-slate-400">: </span>
+              {renderVizVal(v)}
+            </span>
+          ))}
+          {" }"}
         </span>
       );
-    } else if (isNext) {
-      bgClass = "bg-rose-50 dark:bg-rose-950/30";
-      borderClass = "border-l-4 border-l-rose-400";
-      gutterContent = (
-        <span className="absolute left-0 top-1/2 -translate-y-1/2 text-rose-400">
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor">
-            <path d="M6 3.5v11l8-5.5z" />
-          </svg>
-        </span>
-      );
-    } else if (isExecuted) {
-      bgClass = "bg-emerald-50/40 dark:bg-emerald-950/20";
     }
-
+    const open = entry.kind === "list" ? "[" : entry.kind === "tuple" ? "(" : "{";
+    const close = entry.kind === "list" ? "]" : entry.kind === "tuple" ? ")" : "}";
     return (
-      <div
-        key={lineNum}
-        className={`relative flex items-center border-l-4 py-[1.5px] text-sm leading-6 transition-colors duration-150 ${bgClass} ${borderClass}`}
-      >
-        <div className="relative flex w-12 shrink-0 items-center justify-center">
-          {gutterContent}
-          <span className={`text-xs font-mono select-none ${isCurrent || isNext ? "text-slate-500 font-bold" : "text-slate-400"}`}>
-            {lineNum}
+      <span>
+        {open}{" "}
+        {(entry.items || []).map((item, i) => (
+          <span key={i}>
+            {i > 0 && ", "}
+            {renderVizVal(item)}
           </span>
-        </div>
-        <pre className="flex-1 overflow-hidden font-mono text-sm leading-6">
-          <code>{line || " "}</code>
-        </pre>
-      </div>
+        ))}
+        {" " + close}
+      </span>
     );
   };
 
-  const renderHeapObject = (oid: string, obj: HeapObject, idx: number) => {
-    const color = getObjectColor(obj.type, idx);
+  // ─── UI ──────────────────────────────────────────────────────────
 
-    return (
-      <div key={oid} className={`rounded-xl border ${color} overflow-hidden transition-all duration-300`}>
-        <div className="flex items-center gap-2 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider border-b border-inherit opacity-70">
-          <span>{obj.type}</span>
-          <span className="font-mono text-[10px] opacity-50">id: {oid.slice(0, 12)}</span>
-        </div>
-        <div className="p-2">
-          {obj.type === "list" || obj.type === "tuple" ? (
-            <div className="flex flex-wrap gap-1">
-              {obj.items?.map((item, i) => (
-                <div
-                  key={i}
-                  className="flex flex-col items-center rounded-lg border border-inherit/40 bg-white/50 px-2 py-1 dark:bg-black/20"
-                >
-                  <span className="text-[10px] opacity-50">{i}</span>
-                  <span className="text-xs font-mono font-semibold">{renderInlineVal(item)}</span>
-                </div>
-              ))}
-            </div>
-          ) : obj.type === "dict" ? (
-            <div className="space-y-1">
-              {obj.pairs?.map((pair, i) => (
-                <div key={i} className="flex items-center gap-1.5 rounded-lg border border-inherit/40 bg-white/50 px-2 py-1 text-xs dark:bg-black/20">
-                  <span className="font-bold">
-                    {pair.key.kind === "literal" ? (pair.key as LiteralVal).value : "?"}
-                  </span>
-                  <span className="opacity-40">→</span>
-                  <span className="font-mono">{renderInlineVal(pair.val)}</span>
-                </div>
-              ))}
-            </div>
-          ) : null}
-        </div>
-      </div>
-    );
-  };
-
-  const renderFrameCard = (name: string, vars: Record<string, VarInfo>) => {
-    const entries = Object.entries(vars);
-    return (
-      <div className="overflow-hidden rounded-xl border border-sky-200 bg-white shadow-sm transition-all duration-200 dark:border-sky-800 dark:bg-slate-800/60">
-        <div className="flex items-center gap-2 border-b border-sky-100 bg-sky-50 px-3 py-2 dark:border-sky-900 dark:bg-sky-950/30">
-          <div className="size-2 rounded-full bg-sky-400" />
-          <span className="text-xs font-bold uppercase tracking-wider text-sky-700 dark:text-sky-300">
-            {name}
-          </span>
-        </div>
-        <div className="p-2.5">
-          {entries.length === 0 ? (
-            <p className="text-xs text-slate-400 italic px-1">No variables</p>
-          ) : (
-            <div className="space-y-1">
-              {entries.map(([name, info]) => (
-                <div
-                  key={name}
-                  className="flex items-center justify-between rounded-lg px-2 py-1.5 text-xs transition hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                >
-                  <span className="font-bold text-slate-700 dark:text-slate-200">{name}</span>
-                  <span className="font-mono text-[11px]">{renderInlineVal(info, true)}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  // ─── UI ─────────────────────────────────────────────────────────────
+  const showViz = viewMode === "viz" && vizStep;
 
   return (
     <div className="mx-auto flex min-h-screen max-w-[1440px] flex-col bg-gradient-to-b from-slate-50 to-white px-4 py-5 dark:from-slate-950 dark:to-slate-900">
-      {/* ═══ Top Bar ═══ */}
+      {/* ═══ Header ═══ */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">
@@ -526,37 +639,7 @@ sys.stdout = _saved_out
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Language picker */}
-          <div className="relative">
-            <button
-              onClick={() => setShowLangPicker(!showLangPicker)}
-              className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-            >
-              <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10A15.3 15.3 0 0 1 12 2z" />
-                <path d="M2 12h20" />
-              </svg>
-              {language}
-            </button>
-            {showLangPicker && (
-              <div className="absolute left-0 top-full z-50 mt-1 w-40 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800">
-                {["Python", "JavaScript", "Java", "C++"].map((lang) => (
-                  <button
-                    key={lang}
-                    onClick={() => { setLanguage(lang); setShowLangPicker(false); }}
-                    className={`w-full px-4 py-2 text-left text-sm font-medium transition hover:bg-slate-50 dark:hover:bg-slate-700 ${
-                      lang === language ? "bg-slate-100 text-ink dark:bg-slate-700" : "text-slate-600 dark:text-slate-300"
-                    }`}
-                  >
-                    {lang}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
+        <div className="flex items-center gap-2 flex-wrap">
           {/* Examples */}
           <div className="relative">
             <button
@@ -573,10 +656,14 @@ sys.stdout = _saved_out
                 {EXAMPLES.map((ex) => (
                   <button
                     key={ex.label}
-                    onClick={() => { setCode(ex.code); setSelectedExample(ex.label); setShowExamples(false); setTrace(null); setOutput(`Loaded: ${ex.label}`); }}
-                    className={`w-full px-4 py-2.5 text-left text-sm font-medium transition hover:bg-slate-50 dark:hover:bg-slate-700 ${
-                      selectedExample === ex.label ? "bg-slate-100 text-ink dark:bg-slate-700 dark:text-white" : "text-slate-600 dark:text-slate-300"
-                    }`}
+                    onClick={() => {
+                      setCode(ex.code);
+                      setSelectedExample(ex.label);
+                      setShowExamples(false);
+                      setVizResult(null);
+                      setOutput(`Loaded: ${ex.label}`);
+                    }}
+                    className="w-full px-4 py-2.5 text-left text-sm font-medium transition hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300"
                   >
                     {ex.label}
                   </button>
@@ -585,44 +672,50 @@ sys.stdout = _saved_out
             )}
           </div>
 
+          {/* Download */}
+          <button
+            onClick={downloadPy}
+            className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+            title="Download as main.py"
+          >
+            <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            .py
+          </button>
+
           {/* Run */}
           <button
             onClick={runCode}
-            disabled={isLoading}
+            disabled={isLoading || isRunning}
             className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
           >
-            <svg className="size-4" viewBox="0 0 24 24" fill="currentColor">
+            <svg className={`size-4 ${isRunning ? "animate-spin" : ""}`} viewBox="0 0 24 24" fill="currentColor">
               <path d="M8 5v14l11-7z" />
             </svg>
-            Run
+            {isRunning ? "Running..." : "Run"}
           </button>
 
           {/* Visualize */}
           <button
             onClick={visualizeCode}
-            disabled={isLoading}
+            disabled={isLoading || vizRunning}
             className="flex items-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-700 disabled:opacity-50 shadow-sm"
           >
-            <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg className={`size-4 ${vizRunning ? "animate-spin" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
               <circle cx="12" cy="12" r="3" />
             </svg>
-            Visualize Execution
+            {vizRunning ? "Tracing..." : "Visualize"}
           </button>
-
-          {/* Edit */}
-          <a
-            href="#editor"
-            className="hidden items-center gap-1 text-sm font-semibold text-slate-400 underline-offset-2 hover:text-slate-600 hover:underline dark:hover:text-slate-300 lg:flex"
-          >
-            Edit this code
-          </a>
         </div>
       </div>
 
       {/* ═══ Main Grid ═══ */}
       <div className="flex flex-1 gap-4 overflow-hidden lg:flex-row flex-col">
-        {/* ─── Left Panel: Editor + Stepper ─── */}
+        {/* ─── Left Panel ─── */}
         <div className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800/50 lg:w-[62%]">
           {/* Editor header */}
           <div className="flex items-center justify-between border-b border-slate-200 px-4 py-2.5 dark:border-slate-700">
@@ -632,26 +725,67 @@ sys.stdout = _saved_out
               </svg>
               main.py
             </span>
-            <button
-              onClick={() => { setCode(DEFAULT_CODE); setTrace(null); setOutput("Reset to default example."); }}
-              className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700"
-              title="Reset code"
-            >
-              <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" />
-              </svg>
-            </button>
+            {showViz && (
+              <span className="text-[11px] text-slate-400">read-only while stepping</span>
+            )}
+            {!showViz && (
+              <button
+                onClick={() => {
+                  setCode(DEFAULT_CODE);
+                  setVizResult(null);
+                  setOutput("Reset to default example.");
+                }}
+                className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700"
+                title="Reset code"
+              >
+                <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                  <path d="M3 3v5h5" />
+                </svg>
+              </button>
+            )}
           </div>
 
-          {/* Code editor with line highlighting overlay */}
+          {/* Code area */}
           <div className="relative flex-1 overflow-auto" id="editor">
-            {/* We render code lines with highlighting over the editor */}
-            {/* Since Monaco doesn't support per-line background colors easily,
-                we use a simplified approach: show the Monaco editor in edit mode,
-                and switch to highlighted view when visualization is active. */}
-            {trace ? (
+            {showViz ? (
               <div className="h-[480px] overflow-y-auto bg-white p-0 font-mono dark:bg-slate-900">
-                {lines.map((line, idx) => renderCodeLine(line, idx))}
+                {codeLines.map((line, idx) => {
+                  const lineNum = idx + 1;
+                  const isPrev = vizPrevLine === lineNum && vizStep.line !== lineNum;
+                  const isCurrent = vizStep.line === lineNum;
+
+                  let bgClass = "bg-transparent";
+                  let borderClass = "border-transparent";
+                  let arrow = "";
+
+                  if (isCurrent) {
+                    bgClass = "bg-teal-50 dark:bg-teal-950/30";
+                    borderClass = "border-l-4 border-l-teal-500";
+                    arrow = "\u2794";
+                  } else if (isPrev) {
+                    bgClass = "bg-amber-50 dark:bg-amber-950/30";
+                    borderClass = "border-l-4 border-l-amber-400";
+                    arrow = "\u2192";
+                  }
+
+                  return (
+                    <div
+                      key={lineNum}
+                      className={`relative flex items-center border-l-4 py-[1.5px] text-sm leading-6 transition-colors duration-150 ${bgClass} ${borderClass}`}
+                    >
+                      <span className="w-7 flex-shrink-0 text-center text-xs text-slate-400">
+                        {arrow}
+                      </span>
+                      <span className="w-10 flex-shrink-0 text-right pr-2 text-xs font-mono select-none text-slate-400">
+                        {lineNum}
+                      </span>
+                      <pre className="flex-1 overflow-hidden font-mono text-sm leading-6">
+                        <code>{line || " "}</code>
+                      </pre>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <div className="h-[480px]">
@@ -678,64 +812,59 @@ sys.stdout = _saved_out
             )}
           </div>
 
-          {/* Stepper controls */}
+          {/* Bottom controls */}
           <div className="border-t border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-800/50">
-            {trace ? (
+            {showViz ? (
               <>
-                {/* Progress bar */}
-                <div className="mb-3">
-                  <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
-                    <span>Step {currentStepIdx + 1} of {stepCount}</span>
-                    <span>{stepCount > 0 ? Math.round(((currentStepIdx + 1) / stepCount) * 100) : 0}%</span>
-                  </div>
-                  <div className="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
-                    <div
-                      className="h-full rounded-full bg-brand-500 transition-all duration-300 ease-out"
-                      style={{ width: `${((currentStepIdx + 1) / stepCount) * 100}%` }}
-                    />
-                  </div>
-                </div>
-
-                {/* Buttons */}
+                <input
+                  type="range"
+                  min={0}
+                  max={Math.max(0, vizSteps.length - 1)}
+                  value={vizIdx}
+                  onChange={(e) => setVizIdx(parseInt(e.target.value, 10))}
+                  className="w-full accent-brand-500 mb-3"
+                />
                 <div className="flex items-center justify-center gap-2">
                   <button
                     onClick={() => stepperGo(0)}
-                    disabled={currentStepIdx === 0}
+                    disabled={vizIdx === 0}
                     className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-30 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300"
                   >
                     <svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.41 16.59L13.82 12l4.59-4.59L17 6l-6 6 6 6zM6 6h2v12H6z"/></svg>
                     First
                   </button>
                   <button
-                    onClick={() => stepperGo(currentStepIdx - 1)}
-                    disabled={currentStepIdx === 0}
+                    onClick={() => stepperGo(vizIdx - 1)}
+                    disabled={vizIdx === 0}
                     className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-30 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300"
                   >
                     <svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
                     Prev
                   </button>
-
                   <span className="mx-2 min-w-[90px] text-center text-xs font-semibold text-slate-500">
-                    <span className="font-mono text-sm font-bold text-slate-800 dark:text-slate-200">{currentStepIdx + 1}</span>
-                    <span className="opacity-50"> / {stepCount}</span>
+                    <span className="font-mono text-sm font-bold text-slate-800 dark:text-slate-200">{vizIdx + 1}</span>
+                    <span className="opacity-50"> / {vizSteps.length}</span>
                   </span>
-
                   <button
-                    onClick={() => stepperGo(currentStepIdx + 1)}
-                    disabled={currentStepIdx >= stepCount - 1}
+                    onClick={() => stepperGo(vizIdx + 1)}
+                    disabled={vizIdx >= vizSteps.length - 1}
                     className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-30 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300"
                   >
                     Next
                     <svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
                   </button>
                   <button
-                    onClick={() => stepperGo(stepCount - 1)}
-                    disabled={currentStepIdx >= stepCount - 1}
+                    onClick={() => stepperGo(vizSteps.length - 1)}
+                    disabled={vizIdx >= vizSteps.length - 1}
                     className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-30 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300"
                   >
                     Last
                     <svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M5.59 7.41L10.18 12l-4.59 4.59L7 18l6-6-6-6zM16 6h2v12h-2z"/></svg>
                   </button>
+                </div>
+                <div className="mt-2 text-center text-xs text-slate-400">
+                  {vizStep?.final ? "Program finished" : `Step ${vizIdx + 1} of ${vizSteps.length}`}
+                  {vizResult?.truncated && <span className="text-amber-500 ml-2">(trace truncated)</span>}
                 </div>
               </>
             ) : (
@@ -747,10 +876,10 @@ sys.stdout = _saved_out
                 Click{" "}
                 <button
                   onClick={visualizeCode}
-                  disabled={isLoading}
+                  disabled={isLoading || vizRunning}
                   className="cursor-pointer font-bold text-brand-600 underline underline-offset-2 transition hover:text-brand-700 disabled:opacity-50 dark:hover:text-brand-400"
                 >
-                  Visualize Execution
+                  Visualize
                 </button>
                 {" "}to begin stepping through your code
               </div>
@@ -758,102 +887,157 @@ sys.stdout = _saved_out
           </div>
         </div>
 
-        {/* ─── Right Panel: Output + Frames + Objects ─── */}
+        {/* ─── Right Panel ─── */}
         <div className="flex flex-col gap-4 lg:w-[38%]">
-          {/* Print Output */}
+          {/* Output */}
           <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800/50">
             <div className="flex items-center gap-2 border-b border-slate-200 px-4 py-2 dark:border-slate-700">
               <svg className="size-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M4 17V4h16v13" /><path d="M4 17h16v4H4z" />
+                <path d="M4 17V4h16v13" />
+                <path d="M4 17h16v4H4z" />
               </svg>
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Print Output</span>
-              {currentStep?.stdout && (
-                <span className="ml-auto text-[11px] text-slate-400">{currentStep.stdout.split("\n").length} lines</span>
-              )}
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Output</span>
+              <div className="ml-auto flex items-center gap-2">
+                <div className="flex gap-1.5">
+                  {([0, 1, 2, 3] as const).map((i) => (
+                    <span
+                      key={i}
+                      className={`inline-block size-2 rounded-full transition-all duration-200 ${
+                        ledState === "idle" ? "bg-slate-600" :
+                        ledState === "running" ? "bg-amber-400 animate-pulse" :
+                        ledState === "success" ? "bg-teal-400 shadow-[0_0_6px_rgba(95,201,186,0.6)]" :
+                        "bg-rose-400 shadow-[0_0_6px_rgba(226,87,76,0.6)]"
+                      }`}
+                      style={ledState === "running" ? { animationDelay: `${i * 0.15}s` } : undefined}
+                    />
+                  ))}
+                </div>
+                <button
+                  onClick={() => { setOutput(""); setLedState("idle"); }}
+                  className="rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700"
+                  title="Clear output"
+                >
+                  <svg className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
             </div>
-            <div className="max-h-[140px] overflow-auto bg-slate-950 p-3 font-mono text-sm leading-relaxed text-green-400">
-              <pre className="whitespace-pre-wrap">{trace ? (currentStep?.stdout || "(no output yet)") : output}</pre>
-            </div>
+            <pre className="max-h-[140px] overflow-auto bg-slate-950 p-3 font-mono text-sm leading-relaxed text-green-400 whitespace-pre-wrap">
+              {showViz
+                ? (vizStep?.output || "(no output yet)")
+                : (output || "Press Run to execute your code.")
+              }
+            </pre>
           </div>
+
+          {/* Stdin */}
+          {!showViz && (
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800/50">
+              <div className="border-b border-slate-200 px-4 py-2 dark:border-slate-700">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Program Input (stdin)</span>
+              </div>
+              <textarea
+                value={stdin}
+                onChange={(e) => setStdin(e.target.value)}
+                placeholder="If your code calls input(), list each value on its own line."
+                className="w-full resize-vertical border-none bg-transparent p-3 font-mono text-xs leading-relaxed text-slate-700 placeholder:text-slate-400 focus:outline-none dark:text-slate-300"
+                rows={3}
+              />
+              <div className="px-4 pb-2 text-[11px] text-slate-400">
+                Each line answers one <code>input()</code> call, in order.
+              </div>
+            </div>
+          )}
 
           {/* Frames + Objects */}
           <div className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800/50">
-            {/* Tabs */}
-            <div className="flex border-b border-slate-200 dark:border-slate-700">
-              <button
-                onClick={() => setActiveTab("frames")}
-                className={`flex-1 px-4 py-2.5 text-center text-xs font-bold uppercase tracking-wider transition ${
-                  activeTab === "frames"
-                    ? "border-b-2 border-brand-500 text-brand-600 bg-brand-50/30 dark:bg-brand-950/20 dark:text-brand-300"
-                    : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                }`}
-              >
-                Frames
-              </button>
-              <button
-                onClick={() => setActiveTab("output")}
-                className={`flex-1 px-4 py-2.5 text-center text-xs font-bold uppercase tracking-wider transition ${
-                  activeTab === "output"
-                    ? "border-b-2 border-brand-500 text-brand-600 bg-brand-50/30 dark:bg-brand-950/20 dark:text-brand-300"
-                    : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                }`}
-              >
-                Objects ({activeHeapEntries.length})
-              </button>
-            </div>
+            {showViz ? (
+              <>
+                {/* Split: frames | objects */}
+                <div className="flex border-b border-slate-200 dark:border-slate-700">
+                  <span className="flex-1 px-4 py-2.5 text-center text-xs font-bold uppercase tracking-wider text-brand-600 border-b-2 border-brand-500 bg-brand-50/30 dark:text-brand-300">
+                    Frames
+                  </span>
+                  <span className="flex-1 px-4 py-2.5 text-center text-xs font-bold uppercase tracking-wider text-slate-400">
+                    Objects
+                  </span>
+                </div>
+                <div className="flex flex-1 min-h-0">
+                  {/* Frames */}
+                  <div className="flex-1 overflow-y-auto border-r border-slate-200 dark:border-slate-700 p-3 space-y-3">
+                    {vizStep?.stack.map((frame, fi) => (
+                      <div key={fi} className="overflow-hidden rounded-xl border border-sky-200 bg-white shadow-sm dark:border-sky-800 dark:bg-slate-800/60">
+                        <div className="flex items-center gap-2 border-b border-sky-100 bg-sky-50 px-3 py-2 dark:border-sky-900 dark:bg-sky-950/30">
+                          <div className="size-2 rounded-full bg-sky-400" />
+                          <span className="text-xs font-bold uppercase tracking-wider text-sky-700 dark:text-sky-300">{frame.name}</span>
+                        </div>
+                        <div className="p-2.5">
+                          {frame.locals.length === 0 ? (
+                            <p className="text-xs text-slate-400 italic px-1">(no local variables)</p>
+                          ) : (
+                            <div className="space-y-1">
+                              {frame.locals.map(([name, val]) => (
+                                <div key={name} className="flex items-center justify-between rounded-lg px-2 py-1.5 text-xs transition hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                  <span className="font-bold text-slate-700 dark:text-slate-200">{name}</span>
+                                  <span className="font-mono text-[11px]">{renderVizVal(val)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {vizStep?.final && (
+                      <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-center text-xs font-semibold text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300">
+                        Program finished
+                      </div>
+                    )}
+                  </div>
 
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto p-3">
-              {!trace ? (
-                <div className="flex h-full items-center justify-center">
+                  {/* Objects */}
+                  <div className="flex-1 overflow-y-auto p-3 space-y-3">
+                    {(() => {
+                      const heapKeys = Object.keys(vizStep?.heap || {});
+                      if (heapKeys.length === 0) {
+                        return <p className="py-8 text-center text-sm text-slate-400">No container objects in scope.</p>;
+                      }
+                      return heapKeys.map((oid) => {
+                        const entry = vizStep!.heap[oid];
+                        const label = heapLabels.get(oid) || `#${oid}`;
+                        return (
+                          <div key={oid} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-800/60">
+                            <div className="mb-1.5 text-xs font-bold text-teal-600 dark:text-teal-400">
+                              {label}{" "}
+                              <span className="font-normal text-slate-400">({entry.kind})</span>
+                            </div>
+                            <div className="font-mono text-xs text-slate-700 dark:text-slate-300 break-all">
+                              {renderHeapBody(entry)}
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex border-b border-slate-200 dark:border-slate-700">
+                  <span className="flex-1 px-4 py-2.5 text-center text-xs font-bold uppercase tracking-wider text-slate-400">
+                    Frames
+                  </span>
+                  <span className="flex-1 px-4 py-2.5 text-center text-xs font-bold uppercase tracking-wider text-slate-400">
+                    Objects
+                  </span>
+                </div>
+                <div className="flex-1 flex items-center justify-center p-6">
                   <p className="text-center text-sm text-slate-400">
-                    Run visualization to see
-                    <br />frames and objects here.
+                    Run visualization to see<br />frames and objects here.
                   </p>
                 </div>
-              ) : activeTab === "frames" ? (
-                <div className="space-y-3">
-                  {currentStep && (
-                    <div className="space-y-3 transition-all duration-300">
-                      {renderFrameCard(currentStep.funcFrame, currentStep.locals)}
-                      {/* Show a "Return" hint at the end */}
-                      {currentStepIdx === stepCount - 1 && (
-                        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-center text-xs font-semibold text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300">
-                          ✓ Program finished
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                /* Objects tab */
-                <div className="space-y-3">
-                  {activeHeapEntries.length === 0 ? (
-                    <p className="py-8 text-center text-sm text-slate-400">No heap objects at this step.</p>
-                  ) : (
-                    <div className="space-y-3 transition-all duration-300">
-                      {activeHeapEntries.map(({ oid, obj }, idx) => renderHeapObject(oid, obj, idx))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Legend */}
-            {trace && (
-              <div className="flex items-center gap-3 border-t border-slate-200 px-3 py-2 text-[10px] text-slate-400 dark:border-slate-700">
-                <span className="flex items-center gap-1">
-                  <span className="inline-block size-2 rounded bg-emerald-500" /> executed
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="inline-block size-2 rounded bg-rose-400" /> next line
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="inline-block size-2 rounded bg-emerald-500" />
-                  <svg className="size-2.5" viewBox="0 0 18 18" fill="currentColor"><path d="M6 3.5v11l8-5.5z" /></svg>
-                  current
-                </span>
-              </div>
+              </>
             )}
           </div>
         </div>
@@ -870,9 +1054,11 @@ sys.stdout = _saved_out
           <span>Python 3.11 (WebAssembly)</span>
         </div>
         <div>
-          {trace && (
+          {showViz && (
             <span className="font-mono text-[11px] text-slate-500">
-              {stepCount} trace steps · {activeHeapEntries.length} heap objects
+              {vizSteps.length} trace steps
+              {vizResult?.error && <span className="text-rose-400 ml-2">error</span>}
+              {vizResult?.truncated && <span className="text-amber-500 ml-2">truncated</span>}
             </span>
           )}
         </div>
