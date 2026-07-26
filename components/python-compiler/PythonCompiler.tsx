@@ -227,7 +227,7 @@ const LANG_META: Record<Language, { label: string; badge: string; file: string }
 // ─── Socket-style Tracer (Python) ─────────────────────────────────────
 
 const TRACER_DRIVER = `
-import sys, json, traceback, builtins, io
+import sys, json, traceback, builtins, io, math
 
 _FILENAME = "<usercode>"
 _MAX_STEPS = 500
@@ -258,6 +258,10 @@ def _snapshot(line, frame):
         if isinstance(val, bool):
             return {"t": "bool", "v": val}
         if isinstance(val, (int, float)):
+            if math.isinf(val):
+                return {"t": "str", "v": "inf" if val > 0 else "-inf"}
+            if math.isnan(val):
+                return {"t": "str", "v": "nan"}
             return {"t": "num", "v": val}
         if isinstance(val, str):
             v = val if len(val) <= 200 else val[:200] + "\\u2026"
@@ -402,6 +406,10 @@ def _ser2(val):
     if isinstance(val, bool):
         return {"t": "bool", "v": val}
     if isinstance(val, (int, float)):
+        if math.isinf(val):
+            return {"t": "str", "v": "inf" if val > 0 else "-inf"}
+        if math.isnan(val):
+            return {"t": "str", "v": "nan"}
         return {"t": "num", "v": val}
     if isinstance(val, str):
         v = val if len(val) <= 200 else val[:200] + "\\u2026"
