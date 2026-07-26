@@ -5,6 +5,8 @@ import Editor from "@monaco-editor/react";
 
 // ─── Types ────────────────────────────────────────────────────────────
 
+type Language = "python" | "javascript";
+
 type VizVal = { t: string; v?: any; id?: number };
 type VizFrame = { name: string; locals: [string, VizVal][] };
 type VizHeapEntry = { kind: string; items?: VizVal[]; entries?: [VizVal, VizVal][] };
@@ -24,7 +26,8 @@ type VizResult = {
 
 // ─── Default code ─────────────────────────────────────────────────────
 
-const DEFAULT_CODE = `def max_product(nums):
+const DEFAULTS: Record<Language, string> = {
+  python: `def max_product(nums):
     if not nums:
         return 0
     max1 = max2 = float('-inf')
@@ -38,20 +41,42 @@ const DEFAULT_CODE = `def max_product(nums):
 
 nums = [12, 43, 6, 8, 3, 6]
 result = max_product(nums)
-print(result)`;
+print(result)`,
+  javascript: `function maxProduct(nums) {
+  if (nums.length === 0) return 0;
+  let max1 = -Infinity, max2 = -Infinity;
+  for (const n of nums) {
+    if (n > max1) {
+      max2 = max1;
+      max1 = n;
+    } else if (n > max2) {
+      max2 = n;
+    }
+  }
+  return max1 * max2;
+}
 
-const EXAMPLES = [
-  {
-    label: "Star Pattern",
-    code: `rows = 5
+const nums = [12, 43, 6, 8, 3, 6];
+const result = maxProduct(nums);
+console.log(result);`,
+};
+
+const EXAMPLES: Record<
+  Language,
+  { label: string; code: string }[]
+> = {
+  python: [
+    {
+      label: "Star Pattern",
+      code: `rows = 5
 for i in range(1, rows + 1):
     for j in range(1, i + 1):
         print('*', end='')
     print()`,
-  },
-  {
-    label: "FizzBuzz",
-    code: `for n in range(1, 21):
+    },
+    {
+      label: "FizzBuzz",
+      code: `for n in range(1, 21):
     if n % 15 == 0:
         print("FizzBuzz")
     elif n % 3 == 0:
@@ -60,10 +85,10 @@ for i in range(1, rows + 1):
         print("Buzz")
     else:
         print(n)`,
-  },
-  {
-    label: "Fibonacci",
-    code: `def fibonacci(n):
+    },
+    {
+      label: "Fibonacci",
+      code: `def fibonacci(n):
     a, b = 0, 1
     result = []
     for _ in range(n):
@@ -74,10 +99,10 @@ for i in range(1, rows + 1):
 nums = fibonacci(10)
 print(nums)
 print(f"Sum: {sum(nums)}")`,
-  },
-  {
-    label: "List Filter",
-    code: `data = [3, 7, 1, 9, 4, 6, 8, 2, 5]
+    },
+    {
+      label: "List Filter",
+      code: `data = [3, 7, 1, 9, 4, 6, 8, 2, 5]
 print("Original:", data)
 
 evens = [n for n in data if n % 2 == 0]
@@ -90,10 +115,10 @@ total = 0
 for n in data:
     total += n
 print(f"Sum: {total}")`,
-  },
-  {
-    label: "Nested Loops",
-    code: `def build_matrix(rows, cols):
+    },
+    {
+      label: "Nested Loops",
+      code: `def build_matrix(rows, cols):
     matrix = []
     for i in range(rows):
         row = []
@@ -105,10 +130,10 @@ print(f"Sum: {total}")`,
 m = build_matrix(3, 4)
 for row in m:
     print(row)`,
-  },
-  {
-    label: "Factorial Sum",
-    code: `n = 5
+    },
+    {
+      label: "Factorial Sum",
+      code: `n = 5
 result = 0.0
 fact = 1
 
@@ -119,8 +144,85 @@ for i in range(1, n + 1):
 print("n =", n)
 print("Series sum =", result)
 print("Expected  : 1/1! + 2/2! + 3/3! + 4/4! + 5/5!")`,
-  },
-];
+    },
+  ],
+  javascript: [
+    {
+      label: "FizzBuzz",
+      code: `for (let n = 1; n <= 20; n++) {
+  if (n % 15 === 0) console.log("FizzBuzz");
+  else if (n % 3 === 0) console.log("Fizz");
+  else if (n % 5 === 0) console.log("Buzz");
+  else console.log(n);
+}`,
+    },
+    {
+      label: "Fibonacci",
+      code: `function fibonacci(n) {
+  const result = [];
+  let a = 0, b = 1;
+  for (let i = 0; i < n; i++) {
+    result.push(a);
+    [a, b] = [b, a + b];
+  }
+  return result;
+}
+
+const nums = fibonacci(10);
+console.log(nums);
+console.log("Sum:", nums.reduce((a, b) => a + b, 0));`,
+    },
+    {
+      label: "Object Destructure",
+      code: `const user = { name: "Alice", age: 30, role: "admin" };
+const { name, ...rest } = user;
+console.log("Name:", name);
+console.log("Rest:", JSON.stringify(rest));`,
+    },
+    {
+      label: "Array Methods",
+      code: `const data = [3, 7, 1, 9, 4, 6, 8, 2, 5];
+console.log("Original:", data);
+
+const evens = data.filter(n => n % 2 === 0);
+console.log("Evens:", evens);
+
+const squares = data.map(n => n ** 2);
+console.log("Squares:", squares);
+
+const total = data.reduce((a, b) => a + b, 0);
+console.log("Sum:", total);`,
+    },
+    {
+      label: "Promise",
+      code: `async function fetchData() {
+  console.log("Fetching...");
+  const result = await new Promise(resolve =>
+    setTimeout(() => resolve("Done!"), 100)
+  );
+  console.log(result);
+}
+
+fetchData();`,
+    },
+    {
+      label: "Recursive Factorial",
+      code: `function factorial(n) {
+  if (n <= 1) return 1;
+  return n * factorial(n - 1);
+}
+
+for (let i = 1; i <= 6; i++) {
+  console.log(\`\${i}! = \${factorial(i)}\`);
+}`,
+    },
+  ],
+};
+
+const LANG_META: Record<Language, { label: string; badge: string; file: string }> = {
+  python: { label: "Python", badge: "Python 3.11", file: "main.py" },
+  javascript: { label: "JavaScript", badge: "JS (ES2024)", file: "main.js" },
+};
 
 // ─── Socket-style Tracer (Python) ─────────────────────────────────────
 
@@ -383,7 +485,8 @@ function assignHeapLabels(steps: VizStep[]): Map<string, string> {
 type ViewMode = "run" | "viz";
 
 export default function PythonCompiler() {
-  const [code, setCode] = useState(DEFAULT_CODE);
+  const [language, setLanguage] = useState<Language>("python");
+  const [code, setCode] = useState(DEFAULTS.python);
   const [stdin, setStdin] = useState("");
   const [output, setOutput] = useState("Loading Python runtime...");
   const [isLoading, setIsLoading] = useState(true);
@@ -399,8 +502,14 @@ export default function PythonCompiler() {
   const [heapLabels, setHeapLabels] = useState<Map<string, string>>(new Map());
   const [vizRunning, setVizRunning] = useState(false);
 
+  const [dark, setDark] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+
   const pyodideRef = useRef<any>(null);
   const editorRef = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // ─── Load Pyodide ─────────────────────────────────────────────────
   useEffect(() => {
@@ -432,6 +541,64 @@ export default function PythonCompiler() {
     init();
   }, []);
 
+  // ─── Dark mode ─────────────────────────────────────────────────────
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", dark);
+  }, [dark]);
+
+  // ─── Fullscreen ────────────────────────────────────────────────────
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", handler);
+    return () => document.removeEventListener("fullscreenchange", handler);
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    if (!containerRef.current) return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      containerRef.current.requestFullscreen();
+    }
+  }, []);
+
+  // ─── Share ─────────────────────────────────────────────────────────
+  const shareUrl = useMemo(() => {
+    try {
+      const encoded = btoa(unescape(encodeURIComponent(code)));
+      const params = new URLSearchParams({ code: encoded, lang: language });
+      if (stdin) params.set("stdin", stdin);
+      return `${window.location.origin}/python-compiler?${params.toString()}`;
+    } catch {
+      return "";
+    }
+  }, [code, language, stdin]);
+
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const codeParam = params.get("code");
+      const langParam = params.get("lang") as Language | null;
+      if (codeParam) {
+        const decoded = decodeURIComponent(escape(atob(codeParam)));
+        setCode(decoded);
+        if (langParam === "python" || langParam === "javascript") {
+          setLanguage(langParam);
+        }
+      }
+      const stdinParam = params.get("stdin");
+      if (stdinParam) setStdin(stdinParam);
+    } catch {}
+  }, []);
+
+  const copyShareLink = useCallback(() => {
+    if (!shareUrl) return;
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    });
+  }, [shareUrl]);
+
   const codeLines = useMemo(() => code.split("\n"), [code]);
 
   // Viz derived state
@@ -444,24 +611,65 @@ export default function PythonCompiler() {
 
   // ─── Actions ──────────────────────────────────────────────────────
 
-  const downloadPy = useCallback(() => {
+  const downloadFile = useCallback(() => {
+    const meta = LANG_META[language];
     const blob = new Blob([code], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "main.py";
+    a.download = meta.file;
     a.click();
     URL.revokeObjectURL(url);
-  }, [code]);
+  }, [code, language]);
 
   const runCode = useCallback(async () => {
-    const py = pyodideRef.current;
-    if (!py || isRunning) return;
+    if (isRunning) return;
     setViewMode("run");
     setVizResult(null);
     setIsRunning(true);
     setLedState("running");
     setOutput("");
+
+    if (language === "javascript") {
+      try {
+        const logs: string[] = [];
+        const fakeConsole = {
+          log: (...args: any[]) => logs.push(args.map(String).join(" ")),
+          error: (...args: any[]) => logs.push("[error] " + args.map(String).join(" ")),
+          warn: (...args: any[]) => logs.push("[warn] " + args.map(String).join(" ")),
+          info: (...args: any[]) => logs.push("[info] " + args.map(String).join(" ")),
+          table: (data: any) => logs.push(JSON.stringify(data, null, 2)),
+          dir: (data: any) => logs.push(JSON.stringify(data, null, 2)),
+          clear: () => { logs.length = 0; },
+        };
+        const wrapped = `(async function(){\nconst console={log:__log,error:__err,warn:__warn,info:__info,table:__table,dir:__dir,clear:__clear};\n${code}\n})()`;
+        const fn = new Function(
+          "__log", "__err", "__warn", "__info", "__table", "__dir", "__clear",
+          wrapped,
+        );
+        const promise = fn(
+          fakeConsole.log, fakeConsole.error, fakeConsole.warn,
+          fakeConsole.info, fakeConsole.table, fakeConsole.dir, fakeConsole.clear,
+        );
+        if (promise && typeof promise.then === "function") await promise;
+        const combined = logs.join("\n") || "(no output)";
+        setOutput(combined);
+        setLedState("success");
+      } catch (err: any) {
+        setOutput(`Error: ${err.message}`);
+        setLedState("error");
+      } finally {
+        setIsRunning(false);
+      }
+      return;
+    }
+
+    // Python via Pyodide
+    const py = pyodideRef.current;
+    if (!py) {
+      setIsRunning(false);
+      return;
+    }
 
     try {
       await py.runPythonAsync(`
@@ -525,9 +733,13 @@ _result = _json.dumps({"output": _w.getvalue(), "error": _error})
     } finally {
       setIsRunning(false);
     }
-  }, [code, stdin, isRunning]);
+  }, [code, stdin, isRunning, language]);
 
   const visualizeCode = useCallback(async () => {
+    if (language !== "python") {
+      setOutput("Visualization is only available for Python.");
+      return;
+    }
     const py = pyodideRef.current;
     if (!py || vizRunning) return;
     setVizRunning(true);
@@ -625,18 +837,40 @@ _result = _json.dumps({"output": _w.getvalue(), "error": _error})
   // ─── UI ──────────────────────────────────────────────────────────
 
   const showViz = viewMode === "viz" && vizStep;
+  const meta = LANG_META[language];
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-[1440px] flex-col bg-gradient-to-b from-slate-50 to-white px-4 py-5 dark:from-slate-950 dark:to-slate-900">
+    <div ref={containerRef} className={`mx-auto flex min-h-screen max-w-[1440px] flex-col bg-gradient-to-b from-slate-50 to-white px-4 py-5 dark:from-slate-950 dark:to-slate-900 ${isFullscreen ? "!min-h-screen !py-2" : ""}`}>
       {/* ═══ Header ═══ */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">
             Code<span className="text-brand-600">Verse</span> Visualizer
           </h1>
-          <span className="hidden rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-400 sm:inline-block">
-            Python 3.11
-          </span>
+
+          {/* Language tabs */}
+          <div className="flex overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
+            {(["python", "javascript"] as Language[]).map((lang) => (
+              <button
+                key={lang}
+                onClick={() => {
+                  setLanguage(lang);
+                  setCode(DEFAULTS[lang]);
+                  setVizResult(null);
+                  setViewMode("run");
+                  setOutput(`Switched to ${LANG_META[lang].label}`);
+                  setSelectedExample(null);
+                }}
+                className={`px-3 py-1.5 text-xs font-bold transition ${
+                  language === lang
+                    ? "bg-brand-600 text-white"
+                    : "text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700"
+                }`}
+              >
+                {LANG_META[lang].label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
@@ -653,7 +887,7 @@ _result = _json.dumps({"output": _w.getvalue(), "error": _error})
             </button>
             {showExamples && (
               <div className="absolute right-0 top-full z-50 mt-1 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800">
-                {EXAMPLES.map((ex) => (
+                {EXAMPLES[language].map((ex) => (
                   <button
                     key={ex.label}
                     onClick={() => {
@@ -674,16 +908,65 @@ _result = _json.dumps({"output": _w.getvalue(), "error": _error})
 
           {/* Download */}
           <button
-            onClick={downloadPy}
+            onClick={downloadFile}
             className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-            title="Download as main.py"
+            title={`Download as ${meta.file}`}
           >
             <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
               <polyline points="7 10 12 15 17 10" />
               <line x1="12" y1="15" x2="12" y2="3" />
             </svg>
-            .py
+            .{language === "python" ? "py" : "js"}
+          </button>
+
+          {/* Share */}
+          <button
+            onClick={() => setShowShareModal(true)}
+            className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+            title="Share code"
+          >
+            <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+              <polyline points="16 6 12 2 8 6" />
+              <line x1="12" y1="2" x2="12" y2="15" />
+            </svg>
+            Share
+          </button>
+
+          {/* Dark mode toggle */}
+          <button
+            onClick={() => setDark(!dark)}
+            className="flex items-center justify-center rounded-xl border border-slate-200 bg-white p-2 text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+            title={dark ? "Light mode" : "Dark mode"}
+          >
+            {dark ? (
+              <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="4" />
+                <path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+              </svg>
+            ) : (
+              <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+              </svg>
+            )}
+          </button>
+
+          {/* Fullscreen */}
+          <button
+            onClick={toggleFullscreen}
+            className="flex items-center justify-center rounded-xl border border-slate-200 bg-white p-2 text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+            title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+          >
+            {isFullscreen ? (
+              <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
+              </svg>
+            ) : (
+              <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+              </svg>
+            )}
           </button>
 
           {/* Run */}
@@ -701,7 +984,8 @@ _result = _json.dumps({"output": _w.getvalue(), "error": _error})
           {/* Visualize */}
           <button
             onClick={visualizeCode}
-            disabled={isLoading || vizRunning}
+            disabled={isLoading || vizRunning || language !== "python"}
+            title={language !== "python" ? "Visualization only available for Python" : ""}
             className="flex items-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-700 disabled:opacity-50 shadow-sm"
           >
             <svg className={`size-4 ${vizRunning ? "animate-spin" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -723,7 +1007,7 @@ _result = _json.dumps({"output": _w.getvalue(), "error": _error})
               <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
               </svg>
-              main.py
+              {meta.file}
             </span>
             {showViz && (
               <span className="text-[11px] text-slate-400">read-only while stepping</span>
@@ -731,7 +1015,7 @@ _result = _json.dumps({"output": _w.getvalue(), "error": _error})
             {!showViz && (
               <button
                 onClick={() => {
-                  setCode(DEFAULT_CODE);
+                  setCode(DEFAULTS[language]);
                   setVizResult(null);
                   setOutput("Reset to default example.");
                 }}
@@ -791,7 +1075,7 @@ _result = _json.dumps({"output": _w.getvalue(), "error": _error})
               <div className="h-[480px]">
                 <Editor
                   height="100%"
-                  defaultLanguage="python"
+                  defaultLanguage={language === "python" ? "python" : "javascript"}
                   theme="vs-dark"
                   value={code}
                   onChange={(val) => setCode(val || "")}
@@ -1047,11 +1331,11 @@ _result = _json.dumps({"output": _w.getvalue(), "error": _error})
       <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-1.5">
-            <span className={`inline-block size-2 rounded-full ${isLoading ? "bg-amber-400 animate-pulse" : "bg-emerald-400"}`} />
-            {isLoading ? "Loading Python runtime..." : "Runtime ready"}
+            <span className={`inline-block size-2 rounded-full ${isLoading && language === "python" ? "bg-amber-400 animate-pulse" : "bg-emerald-400"}`} />
+            {isLoading && language === "python" ? "Loading Python runtime..." : `${meta.badge} ready`}
           </span>
           <span>|</span>
-          <span>Python 3.11 (WebAssembly)</span>
+          <span>{language === "python" ? "Python 3.11 (WebAssembly)" : "JavaScript (Browser)"}</span>
         </div>
         <div>
           {showViz && (
@@ -1063,6 +1347,89 @@ _result = _json.dumps({"output": _w.getvalue(), "error": _error})
           )}
         </div>
       </div>
+
+      {/* ═══ Mobile Bottom Bar ═══ */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center gap-2 border-t border-slate-200 bg-white px-4 py-3 shadow-lg lg:hidden dark:border-slate-700 dark:bg-slate-900">
+        <button
+          onClick={runCode}
+          disabled={isLoading || isRunning}
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-brand-700 disabled:opacity-50"
+        >
+          <svg className={`size-4 ${isRunning ? "animate-spin" : ""}`} viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+          {isRunning ? "Running..." : "Run"}
+        </button>
+        <button
+          onClick={() => {
+            if (language !== "python") {
+              setOutput("Visualization is only available for Python.");
+              return;
+            }
+            visualizeCode();
+          }}
+          disabled={isLoading || vizRunning}
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-brand-200 bg-white px-4 py-3 text-sm font-bold text-brand-700 transition hover:bg-brand-50 disabled:opacity-50 dark:border-brand-800 dark:bg-slate-800 dark:text-brand-300"
+        >
+          <svg className={`size-4 ${vizRunning ? "animate-spin" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+          {vizRunning ? "Tracing..." : "Visualize"}
+        </button>
+      </div>
+
+      {/* ═══ Share Modal ═══ */}
+      {showShareModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={() => setShowShareModal(false)}>
+          <div
+            className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-800"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-700">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">Share Code</h3>
+              <button onClick={() => setShowShareModal(false)} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700">
+                <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+            <div className="px-5 py-4">
+              <p className="mb-3 text-sm text-slate-600 dark:text-slate-400">
+                Share this link to let others view and run your <strong>{meta.label}</strong> code:
+              </p>
+              <div className="flex gap-2">
+                <input
+                  readOnly
+                  value={shareUrl}
+                  className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-mono text-xs text-slate-600 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300"
+                />
+                <button
+                  onClick={copyShareLink}
+                  className="flex items-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-brand-700"
+                >
+                  {shareCopied ? (
+                    <>
+                      <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 6 9 17l-5-5" /></svg>
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
+                      Copy
+                    </>
+                  )}
+                </button>
+              </div>
+              <p className="mt-3 text-[11px] text-slate-400">
+                The link includes your code and language selection. Stdin is also included if provided.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
