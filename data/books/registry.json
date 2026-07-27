@@ -115,5 +115,14 @@
     "description": "Build strong ML foundations with supervised and unsupervised learning, model evaluation, and real-world workflows.",
     "source": "Machine Learning Foundations.docx",
     "chapters": 7
+  },
+  {
+    "slug": "from-neurons-to-gpt",
+    "title": "From Neurons to GPT",
+    "category": "AI/ML",
+    "level": "Beginner",
+    "description": "Understand AI from biological neurons to large language models like GPT.",
+    "source": "From Neurons to GPT.docx",
+    "chapters": 31
   }
 ]

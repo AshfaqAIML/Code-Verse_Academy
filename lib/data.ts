@@ -486,6 +486,14 @@ export const tutorialTracks = [
     text: "Build strong ML foundations with supervised and unsupervised learning, model evaluation, and real-world workflows.",
     topics: ["ML basics", "Supervised learning", "Unsupervised learning", "Model eval", "Workflows", "Projects"],
     icon: BrainCircuit
+  },
+  {
+    title: "From Neurons to GPT",
+    slug: "from-neurons-to-gpt",
+    level: "Beginner",
+    text: "Understand AI from biological neurons to large language models like GPT.",
+    topics: ["Neurons", "Perceptrons", "Neural networks", "Deep learning", "Transformers", "GPT"],
+    icon: BrainCircuit
   }
 ];
 
