@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getRequestClientKey, takeRateLimit } from "@/lib/request-rate-limit";
 
 const PISTON_URL = "https://emkc.org/api/v2/piston/execute";
 
@@ -93,10 +94,21 @@ print(json.dumps(_trace))
 
 export async function POST(req: NextRequest) {
   try {
+    const limit = takeRateLimit(getRequestClientKey(req, "execute"), 20, 60_000);
+    if (!limit.allowed) {
+      return NextResponse.json(
+        { error: "Too many code execution requests. Please wait before trying again." },
+        { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
+      );
+    }
+
     const { code, mode } = await req.json();
 
     if (!code || typeof code !== "string") {
       return NextResponse.json({ error: "Code is required" }, { status: 400 });
+    }
+    if (code.length > 20_000) {
+      return NextResponse.json({ error: "Code must be 20,000 characters or fewer." }, { status: 413 });
     }
 
     const isVisualize = mode === "visualize";

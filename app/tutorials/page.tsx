@@ -47,7 +47,7 @@ export default function TutorialsPage() {
             return (
               <Link
                 key={track.title}
-                href={track.slug === "python-backend-development" ? `/tutorials/${track.slug}` : `/tutorial/${track.slug}`}
+                href={["python-backend-development", "ai-from-scratch", "machine-learning-foundations", "from-neurons-to-gpt"].includes(track.slug) ? `/tutorials/${track.slug}` : `/tutorial/${track.slug}`}
                 className="group rounded-2xl border border-slate-200 bg-white p-6 transition hover:-translate-y-1 hover:border-brand-500 hover:shadow-xl hover:shadow-cyan-100 dark:border-slate-800 dark:bg-slate-900 dark:hover:shadow-black/20"
               >
                 <div className="flex items-start justify-between gap-4">

@@ -773,7 +773,7 @@ _result = _json.dumps({"output": _w.getvalue(), "error": _error})
     } finally {
       setVizRunning(false);
     }
-  }, [code, stdin, vizRunning]);
+  }, [code, stdin, vizRunning, language]);
 
   const stepperGo = useCallback((idx: number) => {
     setVizIdx((prev) => Math.max(0, Math.min(idx, vizSteps.length - 1)));

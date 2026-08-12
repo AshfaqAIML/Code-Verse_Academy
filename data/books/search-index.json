@@ -1,5 +1,113 @@
 [
   {
+    "label": "AI From Scratch",
+    "href": "/tutorials/ai-from-scratch",
+    "group": "Tutorials",
+    "meta": "AI/ML • Beginner to Production"
+  },
+  {
+    "label": "AI Fundamentals and Your Roadmap",
+    "href": "/tutorials/ai-from-scratch/ai-roadmap",
+    "group": "Chapters",
+    "meta": "AI From Scratch • Build the foundations"
+  },
+  {
+    "label": "Mathematics for AI Without Fear",
+    "href": "/tutorials/ai-from-scratch/math-for-learning",
+    "group": "Chapters",
+    "meta": "AI From Scratch • Build the foundations"
+  },
+  {
+    "label": "Python and Data Handling for AI",
+    "href": "/tutorials/ai-from-scratch/python-and-data",
+    "group": "Chapters",
+    "meta": "AI From Scratch • Build the foundations"
+  },
+  {
+    "label": "Machine Learning Fundamentals",
+    "href": "/tutorials/ai-from-scratch/ml-workflow",
+    "group": "Chapters",
+    "meta": "AI From Scratch • Learn from data"
+  },
+  {
+    "label": "Supervised Learning Algorithms",
+    "href": "/tutorials/ai-from-scratch/supervised-learning",
+    "group": "Chapters",
+    "meta": "AI From Scratch • Learn from data"
+  },
+  {
+    "label": "Unsupervised Learning and Representation",
+    "href": "/tutorials/ai-from-scratch/unsupervised-learning",
+    "group": "Chapters",
+    "meta": "AI From Scratch • Learn from data"
+  },
+  {
+    "label": "Evaluation, Features and Improvement",
+    "href": "/tutorials/ai-from-scratch/evaluation-and-features",
+    "group": "Chapters",
+    "meta": "AI From Scratch • Learn from data"
+  },
+  {
+    "label": "Deep Learning and Neural Networks",
+    "href": "/tutorials/ai-from-scratch/deep-learning-core",
+    "group": "Chapters",
+    "meta": "AI From Scratch • Build neural systems"
+  },
+  {
+    "label": "Computer Vision",
+    "href": "/tutorials/ai-from-scratch/computer-vision",
+    "group": "Chapters",
+    "meta": "AI From Scratch • Build neural systems"
+  },
+  {
+    "label": "Natural Language Processing",
+    "href": "/tutorials/ai-from-scratch/natural-language-processing",
+    "group": "Chapters",
+    "meta": "AI From Scratch • Build neural systems"
+  },
+  {
+    "label": "Transformers From Intuition to Architecture",
+    "href": "/tutorials/ai-from-scratch/transformers",
+    "group": "Chapters",
+    "meta": "AI From Scratch • Understand modern AI"
+  },
+  {
+    "label": "Generative AI and LLM Fundamentals",
+    "href": "/tutorials/ai-from-scratch/generative-ai-and-llms",
+    "group": "Chapters",
+    "meta": "AI From Scratch • Understand modern AI"
+  },
+  {
+    "label": "Retrieval-Augmented Generation (RAG)",
+    "href": "/tutorials/ai-from-scratch/rag-systems",
+    "group": "Chapters",
+    "meta": "AI From Scratch • Understand modern AI"
+  },
+  {
+    "label": "AI Agents and Tool-Using Workflows",
+    "href": "/tutorials/ai-from-scratch/ai-agents",
+    "group": "Chapters",
+    "meta": "AI From Scratch • Understand modern AI"
+  },
+  {
+    "label": "Deployment and MLOps Fundamentals",
+    "href": "/tutorials/ai-from-scratch/deployment-and-mlops",
+    "group": "Chapters",
+    "meta": "AI From Scratch • Ship responsible AI"
+  },
+  {
+    "label": "AI System Design",
+    "href": "/tutorials/ai-from-scratch/ai-system-design",
+    "group": "Chapters",
+    "meta": "AI From Scratch • Ship responsible AI"
+  },
+  {
+    "label": "Real-World Projects and Interview Preparation",
+    "href": "/tutorials/ai-from-scratch/projects-and-career",
+    "group": "Chapters",
+    "meta": "AI From Scratch • Ship responsible AI"
+  },
+  {
     "label": "AI/ML Handbook Volume 1",
     "href": "/tutorials/ai-ml-handbook-volume-1",
     "group": "Tutorials",

@@ -52,18 +52,9 @@ export function verifyAuthToken(token: string): SignedPayload | null {
   try {
     return jwt.verify(raw, getAuthSecret()) as SignedPayload;
   } catch {
-    try {
-      const parsed = JSON.parse(Buffer.from(raw, "base64url").toString("utf8")) as Partial<SignedPayload>;
-      if (!parsed?.email || !parsed?.role) return null;
-      return {
-        email: parsed.email,
-        name: typeof parsed.name === "string" ? parsed.name : parsed.email.split("@")[0],
-        role: parsed.role === "admin" ? "admin" : "student",
-        issuedAt: typeof parsed.issuedAt === "string" ? parsed.issuedAt : new Date().toISOString()
-      };
-    } catch {
-      return null;
-    }
+    // Tokens must be signed. Accepting a base64-encoded JSON fallback would let
+    // an attacker forge the `role` claim and access protected routes.
+    return null;
   }
 }
 

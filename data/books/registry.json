@@ -1,5 +1,18 @@
 [
   {
+    "slug": "ai-from-scratch",
+    "title": "AI From Scratch",
+    "category": "AI/ML",
+    "level": "Beginner to Production",
+    "description": "Learn artificial intelligence from the ground up: Python, mathematics, machine learning, deep learning, vision, NLP, transformers, generative AI, LLMs, RAG, agents, deployment and real-world projects.",
+    "source": "Original curriculum informed by the supplied AI From Scratch reference volumes",
+    "chapters": 17,
+    "parts": 5,
+    "lessons": 48,
+    "estimatedMinutes": 780,
+    "coverTheme": "aurora"
+  },
+  {
     "slug": "python-backend-foundation",
     "title": "Python Backend Foundation",
     "category": "Backend",

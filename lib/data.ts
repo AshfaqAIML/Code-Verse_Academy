@@ -472,6 +472,14 @@ export const tutorialTracks = [
     icon: Database
   },
   {
+    title: "AI From Scratch",
+    slug: "ai-from-scratch",
+    level: "Beginner to production",
+    text: "Follow one practical path from Python and maths through ML, deep learning, LLMs, RAG, agents and deployment.",
+    topics: ["Python", "Machine learning", "Deep learning", "LLMs", "RAG", "MLOps"],
+    icon: BrainCircuit
+  },
+  {
     title: "AI and Machine Learning",
     slug: "machine-learning-launchpad",
     level: "Visual learning",

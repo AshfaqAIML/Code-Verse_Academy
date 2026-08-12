@@ -43,7 +43,7 @@ export function GlobalSearch() {
       })),
       ...tutorialTracks.map((track) => ({
         label: track.title,
-        href: track.slug === "python-backend-development" ? `/tutorials/${track.slug}` : `/tutorial/${track.slug}`,
+        href: ["python-backend-development", "ai-from-scratch", "machine-learning-foundations", "from-neurons-to-gpt"].includes(track.slug) ? `/tutorials/${track.slug}` : `/tutorial/${track.slug}`,
         group: "Lessons",
         meta: track.level
       })),
