@@ -32,6 +32,22 @@ export function RevisionCenter() {
     setDeckCount(getFlashcards().length);
   }
 
+  function importAll() {
+    const { added } = addFlashcards(
+      summaries.flatMap((summary) =>
+        (summary.flashcards ?? []).map((fc) => ({
+          front: fc.front,
+          back: fc.back,
+          title: summary.title,
+          href: "/dashboard#revision",
+          kind: "revision"
+        }))
+      )
+    );
+    if (added > 0) setSavedIds((prev) => new Set(summaries.map((s) => s.id)));
+    setDeckCount(getFlashcards().length);
+  }
+
   const weakTopics = summaries.flatMap((summary) => summary.weakTopicPlan).slice(0, 5);
   const generatedCards = summaries.flatMap((summary) => summary.flashcards);
 
@@ -64,7 +80,17 @@ export function RevisionCenter() {
 
       <div className="mt-5 grid gap-5 xl:grid-cols-3">
         <div className="rounded-2xl border border-slate-200 p-5 dark:border-slate-800 xl:col-span-2">
-          <h3 className="mb-4 text-xl font-black">Saved revision history</h3>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h3 className="text-xl font-black">Saved revision history</h3>
+            {summaries.length > 0 && (
+              <button
+                onClick={importAll}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-ink px-3 py-1.5 text-xs font-black text-white transition hover:bg-slate-800 dark:bg-white dark:text-ink dark:hover:bg-slate-200"
+              >
+                <Layers3 className="size-3.5" /> Save all {generatedCards.length} to deck
+              </button>
+            )}
+          </div>
           <div className="space-y-3">
             {(summaries.length ? summaries : demoSummaries).slice(0, 5).map((summary) => (
               <div key={summary.id} className="rounded-xl bg-slate-50 p-4 dark:bg-slate-950">
