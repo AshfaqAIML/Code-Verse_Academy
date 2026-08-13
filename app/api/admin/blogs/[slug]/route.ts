@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { readCollection, upsertOne, deleteOne } from "@/lib/file-store";
+import { parseAdminBody, validateString } from "@/lib/api-validation";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const authError = requireAdmin(request);
@@ -21,9 +22,18 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
   try {
     const { slug } = await params;
-    const body = await request.json();
-    const wordCount = body.blocks?.reduce?.((acc: number, b: { text: string }) => acc + (b.text?.split(/\s+/).length ?? 0), 0) ?? 0;
-    const blog = await upsertOne("blogs", { ...body, slug, wordCount, readingTime: Math.ceil(wordCount / 200) });
+    const parsed = await parseAdminBody(request);
+    if (!parsed.ok) return parsed.error;
+
+    if (parsed.body.title !== undefined && !validateString(parsed.body.title)) {
+      return NextResponse.json({ error: "Title must be a non-empty string" }, { status: 400 });
+    }
+
+    const blocks = Array.isArray(parsed.body.blocks)
+      ? (parsed.body.blocks as unknown as Array<{ text?: string }>)
+      : [];
+    const wordCount = blocks.reduce((acc, b) => acc + (b.text?.split(/\s+/).length ?? 0), 0);
+    const blog = await upsertOne("blogs", { ...parsed.body, slug, wordCount, readingTime: Math.ceil(wordCount / 200) });
     return NextResponse.json({ blog });
   } catch (error) {
     return NextResponse.json({ error: String(error) }, { status: 400 });

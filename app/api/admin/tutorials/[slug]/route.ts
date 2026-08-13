@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { readCollection, upsertOne, deleteOne, findOne } from "@/lib/file-store";
+import { parseAdminBody, validateSlug, validateString } from "@/lib/api-validation";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const authError = requireAdmin(request);
@@ -21,8 +22,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
   try {
     const { slug } = await params;
-    const body = await request.json();
-    const tutorial = await upsertOne("tutorials", { ...body, slug });
+    const parsed = await parseAdminBody(request);
+    if (!parsed.ok) return parsed.error;
+
+    if (parsed.body.title !== undefined && !validateString(parsed.body.title)) {
+      return NextResponse.json({ error: "Title must be a non-empty string" }, { status: 400 });
+    }
+
+    const tutorial = await upsertOne("tutorials", { ...parsed.body, slug });
     return NextResponse.json({ tutorial });
   } catch (error) {
     return NextResponse.json({ error: String(error) }, { status: 400 });

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { readCollection, upsertOne } from "@/lib/file-store";
 import blogData from "@/data/blogs.json";
+import { parseAdminBody, validateSlug, validateString } from "@/lib/api-validation";
 
 export async function GET(request: NextRequest) {
   const authError = requireAdmin(request);
@@ -19,13 +20,23 @@ export async function POST(request: NextRequest) {
   if (authError) return authError;
 
   try {
-    const body = await request.json();
-    const existing = (await readCollection("blogs")).find((b) => (b as { slug: string }).slug === body.slug);
+    const parsed = await parseAdminBody(request);
+    if (!parsed.ok) return parsed.error;
+
+    const slug = validateSlug(parsed.body.slug);
+    if (!slug || !validateString(parsed.body.title)) {
+      return NextResponse.json({ error: "A valid slug and title are required" }, { status: 400 });
+    }
+
+    const existing = (await readCollection("blogs")).find((b) => (b as { slug: string }).slug === slug);
     if (existing) {
       return NextResponse.json({ error: "A blog with this slug already exists" }, { status: 409 });
     }
-    const wordCount = body.blocks?.reduce?.((acc: number, b: { text: string }) => acc + (b.text?.split(/\s+/).length ?? 0), 0) ?? 0;
-    const blog = await upsertOne("blogs", { ...body, wordCount, readingTime: Math.ceil(wordCount / 200) });
+    const blocks = Array.isArray(parsed.body.blocks)
+      ? (parsed.body.blocks as unknown as Array<{ text?: string }>)
+      : [];
+    const wordCount = blocks.reduce((acc, b) => acc + (b.text?.split(/\s+/).length ?? 0), 0);
+    const blog = await upsertOne("blogs", { ...parsed.body, slug, wordCount, readingTime: Math.ceil(wordCount / 200) });
     return NextResponse.json({ blog }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: String(error) }, { status: 400 });

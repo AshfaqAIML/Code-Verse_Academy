@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { getLibraryBooks, getLibraryBook } from "@/lib/books";
 import { connectDB } from "@/lib/db";
 import { Book } from "@/lib/models/Book";
+import { parseAdminBody } from "@/lib/api-validation";
 
 export async function GET(request: NextRequest) {
   const authError = requireAdmin(request);
@@ -21,8 +22,10 @@ export async function POST(request: NextRequest) {
   if (authError) return authError;
 
   try {
-    const body = await request.json();
-    if (body.action !== "migrate") {
+    const parsed = await parseAdminBody(request);
+    if (!parsed.ok) return parsed.error;
+
+    if (parsed.body.action !== "migrate") {
       return NextResponse.json({ error: "Invalid action" }, { status: 400 });
     }
 

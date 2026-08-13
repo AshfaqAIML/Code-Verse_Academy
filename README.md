@@ -157,7 +157,6 @@ Navigation metadata, categories, course cards, legacy tutorial content, practice
 | `/api/ai/revision` | Streamed AI revision assistant response. |
 | `/api/revision/history` | Revision-history persistence/query flow. |
 | `/api/practice` | Practice-track data. |
-| `/api/execute` | Code execution endpoint. |
 | `/api/certificates` | Certificate creation and lookup. |
 | `/api/admin/*` | Book migration and admin CRUD for tutorials and blogs. |
 | `/api/playground/*` | Templates, saved projects, fork/duplicate, and import/export. |

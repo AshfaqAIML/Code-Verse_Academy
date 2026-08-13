@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { readCollection, upsertOne } from "@/lib/file-store";
 import { tutorialContent, courses } from "@/lib/data";
+import { parseAdminBody, validateSlug, validateString } from "@/lib/api-validation";
 
 const courseMap = new Map(courses.map((c) => [c.slug, c]));
 
@@ -44,12 +45,19 @@ export async function POST(request: NextRequest) {
   if (authError) return authError;
 
   try {
-    const body = await request.json();
-    const existing = (await readCollection("tutorials")).find((t) => (t as { slug: string }).slug === body.slug);
+    const parsed = await parseAdminBody(request);
+    if (!parsed.ok) return parsed.error;
+
+    const slug = validateSlug(parsed.body.slug);
+    if (!slug || !validateString(parsed.body.title)) {
+      return NextResponse.json({ error: "A valid slug and title are required" }, { status: 400 });
+    }
+
+    const existing = (await readCollection("tutorials")).find((t) => (t as { slug: string }).slug === slug);
     if (existing) {
       return NextResponse.json({ error: "A tutorial with this slug already exists" }, { status: 409 });
     }
-    const tutorial = await upsertOne("tutorials", body);
+    const tutorial = await upsertOne("tutorials", { ...parsed.body, slug });
     return NextResponse.json({ tutorial }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: String(error) }, { status: 400 });
