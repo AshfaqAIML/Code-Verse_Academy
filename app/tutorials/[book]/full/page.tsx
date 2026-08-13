@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, BookOpenText, ChevronRight, ListChecks } from "lucide-react";
 import { getLibraryBook, type LibraryBookBlock } from "@/lib/books";
+import { CodeBlock } from "@/components/ui/code-block";
 
 export default async function FullTutorialBookPage({ params }: { params: Promise<{ book: string }> }) {
   const { book: bookSlug } = await params;
@@ -133,11 +134,7 @@ function FullBookBlock({ block, id }: { block: LibraryBookBlock; id: string }) {
   }
 
   if (looksLikeCode(block.text)) {
-    return (
-      <pre className="overflow-x-auto rounded-2xl bg-slate-950 p-5 text-sm leading-7 text-cyan-100">
-        <code>{block.text}</code>
-      </pre>
-    );
+    return <CodeBlock code={block.text} />;
   }
 
   return <p className="text-[17px] leading-8 text-slate-700 dark:text-slate-300">{block.text}</p>;
