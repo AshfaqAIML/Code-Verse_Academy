@@ -13,11 +13,14 @@ import {
 } from "recharts";
 import { progressData, skillData } from "@/lib/data";
 
-export function LearningChart() {
+export type LearningPoint = { name: string; xp: number };
+export type SkillPoint = { subject: string; score: number };
+
+export function LearningChart({ data = progressData }: { data?: LearningPoint[] }) {
   return (
     <div className="h-72 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={progressData}>
+        <AreaChart data={data}>
           <defs>
             <linearGradient id="xp" x1="0" x2="0" y1="0" y2="1">
               <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.5} />
@@ -35,11 +38,11 @@ export function LearningChart() {
   );
 }
 
-export function SkillChart() {
+export function SkillChart({ data = skillData }: { data?: SkillPoint[] }) {
   return (
     <div className="h-72 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={skillData}>
+        <BarChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,.25)" vertical={false} />
           <XAxis dataKey="subject" tickLine={false} axisLine={false} />
           <YAxis tickLine={false} axisLine={false} />

@@ -42,6 +42,10 @@ export function getBookProgress(bookSlug: string): BookProgressRecord | null {
   return all[bookSlug] ?? null;
 }
 
+export function getAllBookProgress(): Record<string, BookProgressRecord> {
+  return readAllProgress();
+}
+
 export function getResumeChapterSlug(bookSlug: string, fallback = "chapter-01") {
   return getBookProgress(bookSlug)?.lastChapterSlug || fallback;
 }

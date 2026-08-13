@@ -69,6 +69,14 @@ export function getDashboardStats(): DashboardStats {
   return { streak, longestStreak, xp, completed };
 }
 
+export function getPracticeDates(): string[] {
+  return readPracticeMemory().practiceDates;
+}
+
+export function getCompletedCount(): number {
+  return readPracticeMemory().completed.length;
+}
+
 export type MonthActivity = {
   year: number;
   month: number;
