@@ -7,16 +7,25 @@ import {
   BookOpen,
   CheckCircle2,
   Clock3,
+  Focus,
   ListChecks,
+  Minus,
   PanelLeftClose,
   PanelLeftOpen,
+  Plus,
   Search,
-  Sparkles
+  Sparkles,
+  Trophy
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { LibraryBook, LibraryBookBlock, LibraryBookChapter, LibraryBookLesson } from "@/lib/books";
 import { getBookProgress, recordBookProgress } from "@/lib/book-progress";
 import { getBookmarks, recordRecentLearning, toggleBookmark } from "@/lib/learning-memory";
+import { Button } from "@/components/ui/button";
+import { CodeBlock } from "@/components/ui/code-block";
+import { CopyLinkButton } from "@/components/ui/copy-link-button";
+import { LessonNotes } from "@/components/notes/lesson-notes";
+import { CreateFlashcard } from "@/components/flashcards/create-flashcard";
 
 type ReaderBook = Pick<LibraryBook, "slug" | "title" | "category" | "description" | "parts" | "chapters">;
 
@@ -31,9 +40,26 @@ type Props = {
 export function AIVolumeReader({ book, chapter, lesson, previousLesson, nextLesson }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [outlineOpen, setOutlineOpen] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
+  const [fontIndex, setFontIndex] = useState(1);
+  const [scrollProgress, setScrollProgress] = useState(0);
   const [bookmarked, setBookmarked] = useState(false);
   const [progressPercent, setProgressPercent] = useState(0);
   const [query, setQuery] = useState("");
+
+  const FONT_SIZES = [17, 19, 21, 23];
+  const fontSize = FONT_SIZES[fontIndex] ?? 19;
+
+  useEffect(() => {
+    function onScroll() {
+      const el = document.documentElement;
+      const max = el.scrollHeight - el.clientHeight;
+      setScrollProgress(max > 0 ? Math.min(100, Math.round((el.scrollTop / max) * 100)) : 0);
+    }
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const currentBlocks = lesson?.blocks ?? chapter.blocks;
   const currentTitle = lesson?.title ?? chapter.title;
@@ -87,20 +113,19 @@ export function AIVolumeReader({ book, chapter, lesson, previousLesson, nextLess
 
   return (
     <div className="min-h-screen bg-slate-50/70 dark:bg-slate-950">
+      <div className="fixed inset-x-0 top-0 z-50 h-1 bg-white dark:bg-slate-900">
+        <div className="h-full bg-brand-500 transition-[width] duration-150" style={{ width: `${scrollProgress}%` }} />
+      </div>
       <div className="border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/90 sm:px-6">
         <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3">
           <Link href={`/tutorials/${book.slug}`} className="inline-flex items-center gap-2 text-sm font-black text-brand-700 dark:text-cyan-300">
             <ArrowLeft className="size-4" /> {book.title}
           </Link>
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setSidebarOpen((value) => !value)}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 transition hover:border-brand-300 hover:text-brand-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
-            >
+            <Button variant="secondary" size="sm" onClick={() => setSidebarOpen((value) => !value)} disabled={focusMode}>
               {sidebarOpen ? <PanelLeftClose className="size-4" /> : <PanelLeftOpen className="size-4" />}
               Navigation
-            </button>
+            </Button>
             <label className="hidden min-w-[320px] items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900 md:flex">
               <Search className="size-4" />
               <input
@@ -110,20 +135,29 @@ export function AIVolumeReader({ book, chapter, lesson, previousLesson, nextLess
                 className="w-full bg-transparent outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
               />
             </label>
-            <button
-              type="button"
-              onClick={() => setOutlineOpen((value) => !value)}
-              className="inline-flex items-center gap-2 rounded-xl bg-ink px-3 py-2 text-sm font-black text-white transition dark:bg-white dark:text-ink"
-            >
+            <Button size="sm" onClick={() => setOutlineOpen((value) => !value)} disabled={focusMode}>
               <ListChecks className="size-4" />
               TOC
-            </button>
+            </Button>
+            <div className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white p-1 dark:border-slate-800 dark:bg-slate-900" role="group" aria-label="Reading font size">
+              <Button variant="ghost" size="icon" aria-label="Decrease font size" disabled={fontIndex <= 0} onClick={() => setFontIndex((value) => Math.max(0, value - 1))}>
+                <Minus className="size-4" />
+              </Button>
+              <span className="min-w-8 text-center text-xs font-bold text-slate-500 dark:text-slate-400">{fontSize}px</span>
+              <Button variant="ghost" size="icon" aria-label="Increase font size" disabled={fontIndex >= FONT_SIZES.length - 1} onClick={() => setFontIndex((value) => Math.min(FONT_SIZES.length - 1, value + 1))}>
+                <Plus className="size-4" />
+              </Button>
+            </div>
+            <Button variant={focusMode ? "primary" : "secondary"} size="sm" onClick={() => setFocusMode((value) => !value)}>
+              <Focus className="size-4" />
+              {focusMode ? "Exit focus" : "Focus"}
+            </Button>
           </div>
         </div>
       </div>
 
-      <div className={`mx-auto grid max-w-[1600px] gap-6 px-4 py-6 sm:px-6 ${sidebarOpen ? "xl:grid-cols-[320px_minmax(0,1fr)] 2xl:grid-cols-[320px_minmax(0,1fr)_280px]" : "xl:grid-cols-[minmax(0,1fr)_280px]"}`}>
-        {sidebarOpen ? (
+      <div className={`mx-auto grid max-w-[1600px] gap-6 px-4 py-6 sm:px-6 ${focusMode ? "xl:grid-cols-[minmax(0,1fr)]" : sidebarOpen ? "xl:grid-cols-[320px_minmax(0,1fr)] 2xl:grid-cols-[320px_minmax(0,1fr)_280px]" : "xl:grid-cols-[minmax(0,1fr)_280px]"}`}>
+        {sidebarOpen && !focusMode ? (
           <aside className="h-max rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 xl:sticky xl:top-24">
             <div className="mb-4 flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
@@ -224,16 +258,27 @@ export function AIVolumeReader({ book, chapter, lesson, previousLesson, nextLess
                 : "Open a lesson below to continue in smaller steps, then come back here for the chapter overview."}
             </p>
             <div className="mt-5 flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={handleBookmark}
-                className="inline-flex items-center gap-2 rounded-xl bg-ink px-4 py-2.5 text-sm font-black text-white dark:bg-white dark:text-ink"
-              >
+              <Button size="md" onClick={handleBookmark}>
                 <BookOpen className="size-4" /> {bookmarked ? "Saved" : "Bookmark"}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
+              </Button>
+              <LessonNotes
+                title={`${book.title} - ${currentTitle}`}
+                href={currentHref}
+                kind="book"
+              />
+              <CreateFlashcard
+                title={`${book.title} - ${currentTitle}`}
+                href={currentHref}
+                kind="book"
+              />
+              <Link
+                href={`/practice?track=${book.slug}`}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-leaf px-4 py-2.5 text-sm font-black text-white transition hover:bg-emerald-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2 dark:ring-offset-slate-950"
+              >
+                <Trophy className="size-4" />
+                Practice this topic
+              </Link>
+              <Button variant="secondary" size="md" onClick={() => {
                   recordBookProgress({
                     bookSlug: book.slug,
                     chapterSlug: chapter.slug,
@@ -241,12 +286,10 @@ export function AIVolumeReader({ book, chapter, lesson, previousLesson, nextLess
                     totalChapters: totalUnits
                   });
                   setProgressPercent(100);
-                }}
-                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-black text-slate-700 dark:border-slate-800 dark:text-slate-200"
-              >
+                }}>
                 <CheckCircle2 className="size-4 text-leaf" />
                 Mark as complete
-              </button>
+              </Button>
               <p className="text-sm leading-6 text-slate-500 dark:text-slate-400">
                 Save your place, keep the chapter progress tracked, and continue without losing context.
               </p>
@@ -265,7 +308,7 @@ export function AIVolumeReader({ book, chapter, lesson, previousLesson, nextLess
                     {lesson.title}
                   </p>
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-4" style={{ fontSize: `${fontSize}px`, lineHeight: 1.75 }}>
                   {currentBlocks.length === 0 ? (
                     <p className="rounded-2xl bg-amber-50 p-5 font-semibold text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
                       No lesson body text was available in the extracted DOCX stream.
@@ -330,7 +373,7 @@ export function AIVolumeReader({ book, chapter, lesson, previousLesson, nextLess
                   ))}
                 </div>
                 {currentBlocks.length ? (
-                  <div className="space-y-4">
+                  <div className="space-y-4" style={{ fontSize: `${fontSize}px`, lineHeight: 1.75 }}>
                     {currentBlocks.slice(0, 4).map((block, index) => (
                       <LessonBlock key={`${block.type}-${index}`} block={block} id={`preview-${index}`} />
                     ))}
@@ -358,15 +401,17 @@ export function AIVolumeReader({ book, chapter, lesson, previousLesson, nextLess
           )}
         </article>
 
-        <button
-          type="button"
-          onClick={() => setOutlineOpen((value) => !value)}
-          className="fixed bottom-20 right-5 z-40 inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-700 shadow-xl dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 xl:hidden"
-        >
-          <ListChecks className="size-5" /> Sections
-        </button>
+        {!focusMode ? (
+          <button
+            type="button"
+            onClick={() => setOutlineOpen((value) => !value)}
+            className="fixed bottom-20 right-5 z-40 inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-700 shadow-xl dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 xl:hidden"
+          >
+            <ListChecks className="size-5" /> Sections
+          </button>
+        ) : null}
 
-        {outlineOpen ? (
+        {!focusMode && outlineOpen ? (
           <div className="fixed inset-x-4 bottom-36 z-50 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl dark:border-slate-800 dark:bg-slate-900 xl:hidden">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="font-black">On this page</h2>
@@ -384,25 +429,23 @@ export function AIVolumeReader({ book, chapter, lesson, previousLesson, nextLess
 
 function LessonBlock({ block, id }: { block: LibraryBookBlock; id: string }) {
   if (block.type === "code" || looksLikeCode(block.text) || block.text.includes("\n")) {
-    return (
-      <pre className="my-5 overflow-x-auto rounded-2xl bg-slate-950 p-5 font-mono text-sm leading-7 text-cyan-100">
-        <code>{restoreCodeFormatting(block.text)}</code>
-      </pre>
-    );
+    return <CodeBlock code={restoreCodeFormatting(block.text)} />;
   }
 
   if (block.type === "heading") {
     return (
-      <h2 id={id} className="scroll-mt-24 border-t border-slate-200 pt-8 text-3xl font-black tracking-tight text-ink first:border-0 first:pt-0 dark:border-slate-800 dark:text-white">
+      <h2 id={id} className="group/heading scroll-mt-24 border-t border-slate-200 pt-8 text-3xl font-black tracking-tight text-ink first:border-0 first:pt-0 dark:border-slate-800 dark:text-white">
         {stripNumbering(block.text)}
+        <CopyLinkButton id={id} className="ml-3 align-middle opacity-0 transition group-hover/heading:opacity-100" />
       </h2>
     );
   }
 
   if (block.type === "subheading") {
     return (
-      <h3 id={id} className="scroll-mt-24 pt-6 text-xl font-extrabold text-slate-800 dark:text-slate-100">
+      <h3 id={id} className="group/heading scroll-mt-24 pt-6 text-xl font-extrabold text-slate-800 dark:text-slate-100">
         {stripNumbering(block.text)}
+        <CopyLinkButton id={id} className="ml-2 align-middle opacity-0 transition group-hover/heading:opacity-100" />
       </h3>
     );
   }
@@ -428,7 +471,7 @@ function LessonBlock({ block, id }: { block: LibraryBookBlock; id: string }) {
     return <TableBlock text={block.text} id={id} />;
   }
 
-  return <p className="my-4 whitespace-pre-wrap text-[18px] leading-9 text-slate-700 dark:text-slate-300">{block.text}</p>;
+  return <p className="my-4 whitespace-pre-wrap text-slate-700 dark:text-slate-300">{block.text}</p>;
 }
 
 function TableBlock({ text, id }: { text: string; id: string }) {
