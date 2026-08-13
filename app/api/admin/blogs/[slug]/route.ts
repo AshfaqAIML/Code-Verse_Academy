@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { readCollection, upsertOne, deleteOne } from "@/lib/file-store";
 import { parseAdminBody, validateString } from "@/lib/api-validation";
+import { adminWriteLimit } from "@/lib/request-rate-limit";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const authError = requireAdmin(request);
@@ -19,6 +20,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const authError = requireAdmin(request);
   if (authError) return authError;
+
+  const writeLimit = adminWriteLimit(request);
+  if (writeLimit) return writeLimit;
 
   try {
     const { slug } = await params;
@@ -43,6 +47,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const authError = requireAdmin(request);
   if (authError) return authError;
+
+  const writeLimit = adminWriteLimit(request);
+  if (writeLimit) return writeLimit;
 
   const { slug } = await params;
   const deleted = await deleteOne("blogs", slug);

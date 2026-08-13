@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 import { OAuth2Client } from "google-auth-library";
 import { createAuthToken } from "@/lib/auth";
+import { getRequestClientKey, rateLimitedResponse, takeRateLimit } from "@/lib/request-rate-limit";
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export async function POST(request: Request) {
   try {
+    const ipLimit = takeRateLimit(getRequestClientKey(request, "auth:google"), 20, 5 * 60 * 1000);
+    if (!ipLimit.allowed) return rateLimitedResponse(ipLimit.retryAfterSeconds);
+
     const { credential } = await request.json();
     if (!credential) {
       return NextResponse.json({ error: "Missing credential" }, { status: 400 });

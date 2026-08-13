@@ -1,3 +1,5 @@
+import { NextResponse } from "next/server";
+
 type RateLimitResult = { allowed: boolean; retryAfterSeconds: number };
 
 type Entry = { count: number; resetAt: number };
@@ -35,4 +37,17 @@ export function getRequestClientKey(request: Request, scope: string) {
   const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
   const client = forwarded || request.headers.get("x-real-ip") || "unknown-client";
   return `${scope}:${client}`;
+}
+
+export function rateLimitedResponse(retryAfterSeconds: number): NextResponse {
+  return NextResponse.json(
+    { error: "Too many requests. Please slow down and try again." },
+    { status: 429, headers: { "Retry-After": String(retryAfterSeconds) } }
+  );
+}
+
+export function adminWriteLimit(request: Request): NextResponse | null {
+  const limit = takeRateLimit(getRequestClientKey(request, "admin:write"), 60, 60_000);
+  if (!limit.allowed) return rateLimitedResponse(limit.retryAfterSeconds);
+  return null;
 }

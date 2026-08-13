@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { readCollection, upsertOne } from "@/lib/file-store";
 import blogData from "@/data/blogs.json";
 import { parseAdminBody, validateSlug, validateString } from "@/lib/api-validation";
+import { adminWriteLimit } from "@/lib/request-rate-limit";
 
 export async function GET(request: NextRequest) {
   const authError = requireAdmin(request);
@@ -18,6 +19,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const authError = requireAdmin(request);
   if (authError) return authError;
+
+  const writeLimit = adminWriteLimit(request);
+  if (writeLimit) return writeLimit;
 
   try {
     const parsed = await parseAdminBody(request);

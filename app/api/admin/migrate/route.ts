@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { writeCollection, readCollection } from "@/lib/file-store";
 import { tutorialContent, courses } from "@/lib/data";
 import blogData from "@/data/blogs.json";
+import { adminWriteLimit } from "@/lib/request-rate-limit";
 
 const courseMap = new Map(courses.map((c) => [c.slug, c]));
 
@@ -25,6 +26,9 @@ function mergeCourseData(slug: string, content: Record<string, unknown>) {
 export async function POST(request: NextRequest) {
   const authError = requireAdmin(request);
   if (authError) return authError;
+
+  const writeLimit = adminWriteLimit(request);
+  if (writeLimit) return writeLimit;
 
   const { type } = await request.json().catch(() => ({ type: "all" }));
   const results = { tutorials: 0, blogs: 0 };

@@ -1,10 +1,19 @@
 import { NextResponse } from "next/server";
 import { createAuthToken } from "@/lib/auth";
+import { getRequestClientKey, rateLimitedResponse, takeRateLimit } from "@/lib/request-rate-limit";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
   const password = typeof body?.password === "string" ? body.password : "";
+
+  const ipLimit = takeRateLimit(getRequestClientKey(request, "auth:login"), 20, 5 * 60 * 1000);
+  if (!ipLimit.allowed) return rateLimitedResponse(ipLimit.retryAfterSeconds);
+
+  if (email) {
+    const emailLimit = takeRateLimit(`auth:login:email:${email}`, 8, 5 * 60 * 1000);
+    if (!emailLimit.allowed) return rateLimitedResponse(emailLimit.retryAfterSeconds);
+  }
 
   if (!email || !email.includes("@")) {
     return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });

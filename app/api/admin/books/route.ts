@@ -4,6 +4,7 @@ import { getLibraryBooks, getLibraryBook } from "@/lib/books";
 import { connectDB } from "@/lib/db";
 import { Book } from "@/lib/models/Book";
 import { parseAdminBody } from "@/lib/api-validation";
+import { adminWriteLimit } from "@/lib/request-rate-limit";
 
 export async function GET(request: NextRequest) {
   const authError = requireAdmin(request);
@@ -20,6 +21,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const authError = requireAdmin(request);
   if (authError) return authError;
+
+  const writeLimit = adminWriteLimit(request);
+  if (writeLimit) return writeLimit;
 
   try {
     const parsed = await parseAdminBody(request);
