@@ -10,22 +10,24 @@ type ThemeContextValue = {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [theme, setTheme] = useState<"light" | "dark" | null>(null);
 
   useEffect(() => {
     const stored = window.localStorage.getItem("codeverse-theme");
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    setTheme(stored === "dark" || (!stored && prefersDark) ? "dark" : "light");
+    const next = stored === "dark" || (!stored && prefersDark) ? "dark" : "light";
+    setTheme(next);
   }, []);
 
   useEffect(() => {
+    if (!theme) return;
     document.documentElement.classList.toggle("dark", theme === "dark");
     window.localStorage.setItem("codeverse-theme", theme);
   }, [theme]);
 
-  const value = useMemo(
+  const value = useMemo<ThemeContextValue>(
     () => ({
-      theme,
+      theme: theme === "dark" ? "dark" : "light",
       toggleTheme: () => setTheme((current) => (current === "dark" ? "light" : "dark"))
     }),
     [theme]

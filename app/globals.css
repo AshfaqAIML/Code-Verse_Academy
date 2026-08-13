@@ -6,12 +6,18 @@
   color-scheme: light;
   --bg: 247 249 252;
   --text: 16 24 40;
+  --surface: 255 255 255;
+  --muted: 100 116 139;
+  --border: 226 232 240;
 }
 
 .dark {
   color-scheme: dark;
   --bg: 10 15 24;
   --text: 239 246 255;
+  --surface: 15 23 42;
+  --muted: 148 163 184;
+  --border: 30 41 59;
 }
 
 * {
@@ -20,6 +26,21 @@
 
 html {
   scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 body {
