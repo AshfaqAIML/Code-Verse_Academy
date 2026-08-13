@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Bookmark, NotebookText, Search, Trash2, Zap } from "lucide-react";
+import { Bookmark, NotebookText, Rocket, Search, Trash2, Zap } from "lucide-react";
 import { Section } from "@/components/section";
 import { getNotes, deleteNote } from "@/lib/notes";
 import { getBookmarks, toggleBookmark } from "@/lib/learning-memory";
@@ -20,6 +20,7 @@ type State = {
   notes: NotesList;
   bookmarks: BookmarksList;
   recent: RecentList;
+  projects: Array<{ id: string; title: string; updated_at: string }>;
   query: string;
 };
 
@@ -28,6 +29,7 @@ const INITIAL: State = {
   notes: [],
   bookmarks: [],
   recent: [],
+  projects: [],
   query: ""
 };
 
@@ -35,7 +37,8 @@ function collect(): Omit<State, "query" | "loaded"> {
   return {
     notes: getNotes(),
     bookmarks: getBookmarks(),
-    recent: getRecentLearning()
+    recent: getRecentLearning(),
+    projects: []
   };
 }
 
@@ -48,6 +51,7 @@ export default function LearningLibraryPage() {
   useEffect(() => {
     const refresh = () => setState((prev) => ({ ...prev, ...collect(), loaded: true }));
     refresh();
+    void loadProjects();
     window.addEventListener("codeverse-notes", refresh);
     window.addEventListener("codeverse-bookmarks", refresh);
     window.addEventListener("codeverse-learning-memory", refresh);
@@ -57,6 +61,19 @@ export default function LearningLibraryPage() {
       window.removeEventListener("codeverse-learning-memory", refresh);
     };
   }, []);
+
+  async function loadProjects() {
+    const token = window.localStorage.getItem("codeverse-token");
+    if (!token) return;
+    try {
+      const res = await fetch("/api/playground/projects", { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) return;
+      const data = (await res.json()) as { projects?: Array<{ id: string; title: string; updated_at: string }> };
+      setState((prev) => ({ ...prev, projects: data.projects ?? [], loaded: true }));
+    } catch {
+      // Projects are optional; the rest of the library still shows.
+    }
+  }
 
   const normalized = state.query.trim().toLowerCase();
   const filterItem = (title: string, href: string, body?: string) =>
@@ -144,6 +161,46 @@ export default function LearningLibraryPage() {
                 </div>
               ))}
             </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6">
+        <CardContent>
+          <div className="mb-4 flex items-center gap-2">
+            <Rocket className="size-5 text-brand-600" />
+            <h2 className="text-xl font-black text-ink dark:text-white">Saved projects</h2>
+          </div>
+          {state.projects.length > 0 ? (
+            <ul className="space-y-3 md:grid md:grid-cols-2 md:space-y-0 md:gap-3">
+              {state.projects.map((project) => (
+                <li key={project.id}>
+                  <Link
+                    href={`/playground/project/${project.id}`}
+                    className="flex items-center justify-between gap-4 rounded-xl bg-slate-50 p-4 transition hover:bg-slate-100 dark:bg-slate-950 dark:hover:bg-slate-800"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate font-black text-ink dark:text-white">{project.title}</p>
+                      <p className="text-xs font-bold text-slate-500">
+                        Updated {new Date(project.updated_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-sm font-black text-brand-700 dark:text-cyan-300">Open</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <EmptyState
+              icon={<Rocket className="size-6" />}
+              title="No saved projects yet"
+              description="Build something in the playground and sign in — saved projects appear here so you can reopen them anytime."
+              action={
+                <Link href="/playground" className={ghostLink}>
+                  Open playground
+                </Link>
+              }
+            />
           )}
         </CardContent>
       </Card>
