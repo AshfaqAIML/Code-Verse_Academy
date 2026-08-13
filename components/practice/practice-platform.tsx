@@ -32,6 +32,8 @@ import {
 import type { LucideIcon } from "lucide-react";
 import type { PracticeTask, PracticeTaskType, PracticeTrack } from "@/lib/practice";
 import dynamic from "next/dynamic";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 const SQLSandbox = dynamic(() => import("@/components/playground-ide/sql-sandbox"), { ssr: false });
 
@@ -155,6 +157,7 @@ function quizForTask(task: PracticeTaskWithModule): QuizQuestion[] {
 }
 
 export function PracticePlatform({ tracks }: PracticePlatformProps) {
+  const searchParams = useSearchParams();
   const [selectedTrackId, setSelectedTrackId] = useState(tracks[0]?.id ?? "");
   const [selectedModuleId, setSelectedModuleId] = useState(tracks[0]?.modules[0]?.id ?? "");
   const [activeTab, setActiveTab] = useState("practice");
@@ -177,10 +180,23 @@ export function PracticePlatform({ tracks }: PracticePlatformProps) {
     setStreak(calculateStreak(memory.practiceDates));
   }, []);
 
+  useEffect(() => {
+    const trackParam = searchParams.get("track");
+    if (!trackParam) return;
+    const match = tracks.find((track) => track.id === trackParam);
+    if (match) {
+      setSelectedTrackId(match.id);
+      setSelectedModuleId(match.modules[0]?.id ?? "");
+    }
+  }, [searchParams, tracks]);
+
   const selectedTrack = useMemo(
     () => tracks.find((track) => track.id === selectedTrackId) ?? tracks[0],
     [selectedTrackId, tracks]
   );
+
+  const deepLinkedTrackId = searchParams.get("track");
+  const returningToBook = Boolean(deepLinkedTrackId && selectedTrack?.source === "tutorial-book");
 
   const selectedModule = useMemo(() => {
     if (!selectedTrack) return null;
@@ -601,6 +617,15 @@ export function PracticePlatform({ tracks }: PracticePlatformProps) {
                   <div className="flex flex-wrap gap-2">
                     <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-cyan-100">{selectedTrack.category}</span>
                     <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-black text-slate-200">{selectedTrack.lessons} lessons</span>
+                    {returningToBook && deepLinkedTrackId ? (
+                      <Link
+                        href={`/tutorials/${deepLinkedTrackId}`}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-black text-cyan-100 transition hover:bg-white/20"
+                      >
+                        <ArrowLeft className="size-3.5" />
+                        Back to tutorial
+                      </Link>
+                    ) : null}
                   </div>
                   <h2 className="mt-5 max-w-3xl text-4xl font-black tracking-tight md:text-5xl">{selectedTrack.title}</h2>
                   <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">{selectedTrack.description}</p>
