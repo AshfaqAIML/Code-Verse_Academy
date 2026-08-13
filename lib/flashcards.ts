@@ -108,6 +108,42 @@ export function addFlashcard(input: NewFlashcardInput): Flashcard[] {
   return next;
 }
 
+export function addFlashcards(inputs: NewFlashcardInput[]): { added: number; skipped: number } {
+  if (!inputs.length) return { added: 0, skipped: 0 };
+  const existing = readCards();
+  const seen = new Set(existing.map((c) => `${c.front.trim()}|||${c.back.trim()}`));
+  const next = [...existing];
+  let added = 0;
+
+  for (const input of inputs) {
+    const front = input.front.trim();
+    const back = input.back.trim();
+    if (!front || !back) continue;
+    const key = `${front}|||${back}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    next.push({
+      id: newId(),
+      title: input.title,
+      href: input.href,
+      kind: input.kind,
+      front,
+      back,
+      ease: 2.5,
+      intervalDays: 0,
+      reps: 0,
+      lapses: 0,
+      dueAt: new Date().toISOString(),
+      lastReviewedAt: null,
+      createdAt: new Date().toISOString()
+    });
+    added += 1;
+  }
+
+  if (added > 0) writeCards(next);
+  return { added, skipped: inputs.length - added };
+}
+
 export function deleteFlashcard(id: string): Flashcard[] {
   const next = readCards().filter((card) => card.id !== id);
   writeCards(next);

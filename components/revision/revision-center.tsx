@@ -3,16 +3,37 @@
 import { BrainCircuit, CalendarClock, FileText, Flame, Layers3, Sparkles, Trophy } from "lucide-react";
 import { useEffect, useState } from "react";
 import { RevisionSummary } from "@/lib/revision/types";
+import { addFlashcards, getFlashcards } from "@/lib/flashcards";
 
 export function RevisionCenter() {
   const [summaries, setSummaries] = useState<RevisionSummary[]>([]);
+  const [deckCount, setDeckCount] = useState(0);
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     setSummaries(JSON.parse(window.localStorage.getItem("codeverse-revision-summaries") || "[]"));
+    setDeckCount(getFlashcards().length);
+    const refresh = () => setDeckCount(getFlashcards().length);
+    window.addEventListener("codeverse-flashcards", refresh);
+    return () => window.removeEventListener("codeverse-flashcards", refresh);
   }, []);
 
+  function importSummary(summary: RevisionSummary) {
+    const { added } = addFlashcards(
+      (summary.flashcards ?? []).map((fc) => ({
+        front: fc.front,
+        back: fc.back,
+        title: summary.title,
+        href: "/dashboard#revision",
+        kind: "revision"
+      }))
+    );
+    if (added > 0) setSavedIds((prev) => new Set(prev).add(summary.id));
+    setDeckCount(getFlashcards().length);
+  }
+
   const weakTopics = summaries.flatMap((summary) => summary.weakTopicPlan).slice(0, 5);
-  const flashcards = summaries.flatMap((summary) => summary.flashcards).slice(0, 4);
+  const generatedCards = summaries.flatMap((summary) => summary.flashcards);
 
   return (
     <section className="mt-6 rounded-[28px] border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
@@ -30,7 +51,7 @@ export function RevisionCenter() {
         {[
           ["Saved summaries", `${summaries.length}`, FileText],
           ["Weak topics", `${weakTopics.length || 3}`, BrainCircuit],
-          ["Flashcards", `${flashcards.length || 8}`, Layers3],
+          ["Flashcards", `${deckCount}`, Layers3],
           ["Next review", "Tomorrow", CalendarClock]
         ].map(([label, value, Icon]) => (
           <div key={label as string} className="rounded-2xl bg-slate-50 p-5 dark:bg-slate-950">
@@ -54,6 +75,19 @@ export function RevisionCenter() {
                   </span>
                 </div>
                 <p className="mt-2 text-sm text-slate-500">{summary.shortSummary?.[0] || "AI summary saved for revision."}</p>
+                <div className="mt-3 flex items-center gap-3">
+                  <button
+                    onClick={() => importSummary(summary)}
+                    disabled={savedIds.has(summary.id)}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-ink px-3 py-1.5 text-xs font-black text-white transition hover:bg-slate-800 disabled:opacity-50 dark:bg-white dark:text-ink dark:hover:bg-slate-200"
+                  >
+                    <Layers3 className="size-3.5" />
+                    {savedIds.has(summary.id)
+                      ? "Added to deck"
+                      : `Add ${summary.flashcards?.length ?? 0} card${(summary.flashcards?.length ?? 0) === 1 ? "" : "s"} to deck`}
+                  </button>
+                  <span className="text-xs font-bold text-slate-400">{generatedCards.length} generated</span>
+                </div>
               </div>
             ))}
           </div>
