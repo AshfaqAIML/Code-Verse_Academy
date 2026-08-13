@@ -1,5 +1,14 @@
 [
   {
+    "slug": "advanced-backend-and-system-design",
+    "title": "Advanced Backend and System Design",
+    "category": "Backend",
+    "level": "Book 3",
+    "description": "Study advanced backend architecture, scaling, reliability, distributed systems and system design.",
+    "source": "BOOK 3 Advanced Backend & System Design.docx",
+    "chapters": 16
+  },
+  {
     "slug": "ai-from-scratch",
     "title": "AI From Scratch",
     "category": "AI/ML",
@@ -13,22 +22,82 @@
     "coverTheme": "aurora"
   },
   {
-    "slug": "python-backend-foundation",
-    "title": "Python Backend Foundation",
-    "category": "Backend",
-    "level": "Book 1",
-    "description": "Begin Python backend development with setup, Python basics, APIs and backend thinking.",
-    "source": "BOOK 1 Python Backend Foundation.docx",
-    "chapters": 10
+    "slug": "ai-from-scratch-vol1-foundations",
+    "title": "AI From Scratch: Volume 1 - Foundations",
+    "category": "AI/ML",
+    "level": "Volume 1",
+    "description": "Foundations for AI engineering: environment setup, the math (linear algebra, calculus, probability, statistics, optimization), and machine learning fundamentals.",
+    "source": "aiefs-vol1-foundations.pdf",
+    "chapters": 52,
+    "parts": 3,
+    "lessons": 413,
+    "estimatedMinutes": 663,
+    "coverTheme": "aurora"
   },
   {
-    "slug": "english",
-    "title": "English",
-    "category": "Communication",
-    "level": "Foundation",
-    "description": "Build practical English reading, writing, vocabulary and communication skills.",
-    "source": "English.docx",
-    "chapters": 5
+    "slug": "ai-from-scratch-vol2-deep-learning",
+    "title": "AI From Scratch: Volume 2 - Deep Learning",
+    "category": "AI/ML",
+    "level": "Volume 2",
+    "description": "Deep learning from first principles: the perceptron, multi-layer networks, backpropagation, activation and loss functions, plus computer vision and speech & audio.",
+    "source": "aiefs-vol2-deep-learning.pdf",
+    "chapters": 58,
+    "parts": 3,
+    "lessons": 464,
+    "estimatedMinutes": 580,
+    "coverTheme": "midnight"
+  },
+  {
+    "slug": "ai-from-scratch-vol3-language",
+    "title": "AI From Scratch: Volume 3 - Language",
+    "category": "AI/ML",
+    "level": "Volume 3",
+    "description": "Natural language processing from foundations to advanced: tokenization, text representation, word embeddings, plus a deep dive into transformers.",
+    "source": "aiefs-vol3-language.pdf",
+    "chapters": 45,
+    "parts": 2,
+    "lessons": 333,
+    "estimatedMinutes": 347,
+    "coverTheme": "default"
+  },
+  {
+    "slug": "ai-from-scratch-vol4-llms",
+    "title": "AI From Scratch: Volume 4 - Large Language Models",
+    "category": "AI/ML",
+    "level": "Volume 4",
+    "description": "Generative AI, reinforcement learning, building LLMs from scratch, and LLM engineering for production use.",
+    "source": "aiefs-vol4-llms.pdf",
+    "chapters": 68,
+    "parts": 4,
+    "lessons": 561,
+    "estimatedMinutes": 895,
+    "coverTheme": "aurora"
+  },
+  {
+    "slug": "ai-from-scratch-vol5-agents",
+    "title": "AI From Scratch: Volume 5 - Agents",
+    "category": "AI/ML",
+    "level": "Volume 5",
+    "description": "Multimodal AI, tools and protocols, agent engineering, autonomous systems, and multi-agent swarms.",
+    "source": "aiefs-vol5-agents.pdf",
+    "chapters": 137,
+    "parts": 5,
+    "lessons": 993,
+    "estimatedMinutes": 981,
+    "coverTheme": "midnight"
+  },
+  {
+    "slug": "ai-from-scratch-vol6-production",
+    "title": "AI From Scratch: Volume 6 - Production",
+    "category": "AI/ML",
+    "level": "Volume 6",
+    "description": "Ship AI responsibly: infrastructure and production, ethics safety and alignment, and capstone projects.",
+    "source": "aiefs-vol6-production.pdf",
+    "chapters": 143,
+    "parts": 3,
+    "lessons": 1205,
+    "estimatedMinutes": 933,
+    "coverTheme": "default"
   },
   {
     "slug": "backend-developer-interview-mastery",
@@ -40,33 +109,6 @@
     "chapters": 43
   },
   {
-    "slug": "javascript-web-development-master-book",
-    "title": "JavaScript for Web Development Master Book",
-    "category": "Web",
-    "level": "Complete Book",
-    "description": "Learn JavaScript for frontend development, DOM work, browser logic and modern web projects.",
-    "source": "JAVASCRIPT FOR WEB DEVELOPMENT MASTER BOOK.docx",
-    "chapters": 35
-  },
-  {
-    "slug": "master-english-easily",
-    "title": "Master English Easily",
-    "category": "Communication",
-    "level": "Beginner",
-    "description": "Learn English in a simple way with grammar, vocabulary, speaking and practice lessons.",
-    "source": "MASTER ENGLISH EASILY.docx",
-    "chapters": 40
-  },
-  {
-    "slug": "fresher-to-job-ready-data-analyst",
-    "title": "Fresher to Job-Ready Data Analyst",
-    "category": "Data",
-    "level": "Career Path",
-    "description": "Move from beginner to job-ready data analyst with Excel, SQL, dashboards, projects and interview prep.",
-    "source": "Fresher to Job-Ready Data Analyst.docx",
-    "chapters": 47
-  },
-  {
     "slug": "backend-development-and-databases",
     "title": "Backend Development and Databases",
     "category": "Backend",
@@ -74,33 +116,6 @@
     "description": "Go deeper into backend development, database design, SQL, APIs and persistent data systems.",
     "source": "BOOK 2 Backend Development & Databases.docx",
     "chapters": 15
-  },
-  {
-    "slug": "advanced-backend-and-system-design",
-    "title": "Advanced Backend and System Design",
-    "category": "Backend",
-    "level": "Book 3",
-    "description": "Study advanced backend architecture, scaling, reliability, distributed systems and system design.",
-    "source": "BOOK 3 Advanced Backend & System Design.docx",
-    "chapters": 16
-  },
-  {
-    "slug": "python-backend-development",
-    "title": "Python Backend Development",
-    "category": "Backend",
-    "level": "Complete Book",
-    "description": "Build production-ready Python backends with FastAPI, databases, auth, testing, Docker and deployment.",
-    "source": "Python for Backend Development.docx",
-    "chapters": 30
-  },
-  {
-    "slug": "python-engineering",
-    "title": "Python Mastery",
-    "category": "Programming",
-    "level": "Professional",
-    "description": "Write cleaner, stronger Python with engineering practices, architecture and maintainable code.",
-    "source": "Python Engineering.docx",
-    "chapters": 69
   },
   {
     "slug": "backend-engineering-to-ai-systems",
@@ -112,13 +127,40 @@
     "chapters": 80
   },
   {
-    "slug": "python-dsa",
-    "title": "Python DSA",
-    "category": "DSA",
-    "level": "Practice Book",
-    "description": "Learn data structures and algorithms using Python with topic-wise explanations and practice.",
-    "source": "PYTHON DSA.docx",
-    "chapters": 30
+    "slug": "english",
+    "title": "English",
+    "category": "Communication",
+    "level": "Foundation",
+    "description": "Build practical English reading, writing, vocabulary and communication skills.",
+    "source": "English.docx",
+    "chapters": 5
+  },
+  {
+    "slug": "fresher-to-job-ready-data-analyst",
+    "title": "Fresher to Job-Ready Data Analyst",
+    "category": "Data",
+    "level": "Career Path",
+    "description": "Move from beginner to job-ready data analyst with Excel, SQL, dashboards, projects and interview prep.",
+    "source": "Fresher to Job-Ready Data Analyst.docx",
+    "chapters": 47
+  },
+  {
+    "slug": "from-neurons-to-gpt",
+    "title": "From Neurons to GPT",
+    "category": "AI/ML",
+    "level": "Beginner",
+    "description": "Understand AI from biological neurons to large language models like GPT.",
+    "source": "From Neurons to GPT.docx",
+    "chapters": 31
+  },
+  {
+    "slug": "javascript-web-development-master-book",
+    "title": "JavaScript for Web Development Master Book",
+    "category": "Web",
+    "level": "Complete Book",
+    "description": "Learn JavaScript for frontend development, DOM work, browser logic and modern web projects.",
+    "source": "JAVASCRIPT FOR WEB DEVELOPMENT MASTER BOOK.docx",
+    "chapters": 35
   },
   {
     "slug": "machine-learning-foundations",
@@ -130,12 +172,48 @@
     "chapters": 7
   },
   {
-    "slug": "from-neurons-to-gpt",
-    "title": "From Neurons to GPT",
-    "category": "AI/ML",
+    "slug": "master-english-easily",
+    "title": "Master English Easily",
+    "category": "Communication",
     "level": "Beginner",
-    "description": "Understand AI from biological neurons to large language models like GPT.",
-    "source": "From Neurons to GPT.docx",
-    "chapters": 31
+    "description": "Learn English in a simple way with grammar, vocabulary, speaking and practice lessons.",
+    "source": "MASTER ENGLISH EASILY.docx",
+    "chapters": 40
+  },
+  {
+    "slug": "python-backend-development",
+    "title": "Python Backend Development",
+    "category": "Backend",
+    "level": "Complete Book",
+    "description": "Build production-ready Python backends with FastAPI, databases, auth, testing, Docker and deployment.",
+    "source": "Python for Backend Development.docx",
+    "chapters": 30
+  },
+  {
+    "slug": "python-backend-foundation",
+    "title": "Python Backend Foundation",
+    "category": "Backend",
+    "level": "Book 1",
+    "description": "Begin Python backend development with setup, Python basics, APIs and backend thinking.",
+    "source": "BOOK 1 Python Backend Foundation.docx",
+    "chapters": 10
+  },
+  {
+    "slug": "python-dsa",
+    "title": "Python DSA",
+    "category": "DSA",
+    "level": "Practice Book",
+    "description": "Learn data structures and algorithms using Python with topic-wise explanations and practice.",
+    "source": "PYTHON DSA.docx",
+    "chapters": 30
+  },
+  {
+    "slug": "python-engineering",
+    "title": "Python Mastery",
+    "category": "Programming",
+    "level": "Professional",
+    "description": "Write cleaner, stronger Python with engineering practices, architecture and maintainable code.",
+    "source": "Python Engineering.docx",
+    "chapters": 69
   }
 ]
